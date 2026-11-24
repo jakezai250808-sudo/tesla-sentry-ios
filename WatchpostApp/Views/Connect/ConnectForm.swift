@@ -15,6 +15,11 @@ struct ConnectForm: View {
     var reconnecting = false
     let submit: () -> Void
 
+    /// The reveal symbol follows the text size up to this point and then stays, so it keeps
+    /// sitting inside its 44-point target instead of reaching over the help text below it.
+    private static let largestRevealSymbol: CGFloat = 24
+    @ScaledMetric(relativeTo: .body) private var revealSymbolSize = 17.0
+
     private var isConnecting: Bool {
         reconnecting || model.connectState == .connecting
     }
@@ -93,7 +98,7 @@ struct ConnectForm: View {
         VStack(alignment: .leading, spacing: 4) {
             passwordLabel
 
-            HStack(spacing: 0) {
+            HStack(spacing: 8) {
                 passwordInput
                     .font(.body)
                     .foregroundStyle(Color.labelPrimary)
@@ -148,7 +153,7 @@ struct ConnectForm: View {
             model.showPassword.toggle()
         } label: {
             Image(systemName: model.showPassword ? "eye.slash" : "eye")
-                .font(.body.weight(.medium))
+                .font(.system(size: min(revealSymbolSize, Self.largestRevealSymbol), weight: .medium))
                 .foregroundStyle(Color.action)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())

@@ -131,13 +131,17 @@ private struct SavedServerMenu: View {
     let onEdit: () -> Void
     let onRemove: () -> Void
 
+    /// The dots follow the text size up to this point and then stay inside the 44-point target.
+    private static let largestSymbol: CGFloat = 24
+    @ScaledMetric(relativeTo: .title3) private var symbolSize = 20.0
+
     var body: some View {
         Menu {
             Button("Edit connection", action: onEdit)
             Button("Remove", role: .destructive, action: onRemove)
         } label: {
             Image(systemName: "ellipsis")
-                .font(.title3.weight(.medium))
+                .font(.system(size: min(symbolSize, Self.largestSymbol), weight: .medium))
                 .foregroundStyle(Color.labelPrimary)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
