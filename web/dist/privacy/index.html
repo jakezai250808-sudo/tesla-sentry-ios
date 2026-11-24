@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; connect-src 'none'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Privacy information for Watchpost 1.0 (builds 2 and 3): app-to-server requests, local storage, sharing, retention, deletion and support contact.">
   <meta name="color-scheme" content="light dark">
@@ -41,6 +42,7 @@
 <p>导出文件可能含录像、水印及服务器提供的其他信息，不应假定位置或身份信息已经移除。使用系统分享面板时，文件会交给你选择的目标 App 或服务，对方按自身规则处理收到的副本。</p>
 <p>TestFlight 分发，以及通过其测试服务提供的反馈或诊断，由 Apple 处理。你主动发邮件时，邮件服务会参与传送这次通信，详见第6节。这些可选渠道独立于 App 与自建服务器之间的日常请求。</p>
 <p>打开“隐私政策”会在浏览器中访问网站，网站托管方能够收到你的网络地址和页面请求。</p>
+<p>托管方 AirHost 会在网页中附加 Cloudflare 网站统计脚本。本站设置了禁止脚本执行和统计请求的浏览器规则；支持该规则的浏览器会阻止它加载和发送统计。如果浏览器不支持或不执行该规则，脚本仍可能加载并向 Cloudflare 发送网站访问与性能统计。该网站行为不属于 App 与你自建服务器之间的请求。相关处理地域、保留及删除规则尚未核实。</p>
 </section>
 <section class="document-section">
 <h2>4. 保留与删除</h2>
@@ -92,6 +94,7 @@
 <p>Exports can contain the recording, watermark and other information supplied by your server. Do not assume location or identifying details have been removed. Using the iOS share sheet passes the file to the destination you choose; that app or service then handles its own copy under its own policy.</p>
 <p>Apple handles TestFlight distribution and any testing feedback or diagnostics through its testing services. If you send us email, your email service and ours handle that communication; see section 6. These optional channels are separate from normal app-to-server requests.</p>
 <p>Opening Privacy Policy opens the website in your browser. The website host can receive your network address and the page request.</p>
+<p>AirHost adds a Cloudflare Web Analytics script to the website. This site sets a browser policy that prohibits scripts and analytics requests. Browsers that enforce this policy block the script from loading and sending analytics. If your browser does not support or enforce the policy, the script may load and send website visit and performance metrics to Cloudflare. This website behavior is separate from app-to-server requests. The processing location, retention and deletion rules for these records have not yet been verified.</p>
 </section>
 <section class="document-section">
 <h2>4. Retention and deletion</h2>
