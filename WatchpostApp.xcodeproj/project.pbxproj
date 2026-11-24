@@ -12,28 +12,28 @@
 			containerPortal = 8238217991C4C82D1BCE751B /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 2E69B1330A3161295C9DCB01;
-			remoteInfo = AirbuildApp;
+			remoteInfo = WatchpostApp;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		A1B2C3D40000000000000002 /* AirbuildAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AirbuildAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E1D1C645818EB0816572F68E /* AirbuildApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AirbuildApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D40000000000000002 /* WatchpostAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WatchpostAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1D1C645818EB0816572F68E /* WatchpostApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WatchpostApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A1B2C3D40000000000000003 /* AirbuildAppTests */ = {
+		A1B2C3D40000000000000003 /* WatchpostAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AirbuildAppTests;
+			path = WatchpostAppTests;
 			sourceTree = "<group>";
 		};
-		32FA6C0B59B4A7B42DDCEA33 /* AirbuildApp */ = {
+		32FA6C0B59B4A7B42DDCEA33 /* WatchpostApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			explicitFileTypes = {
 			};
 			explicitFolders = (
 			);
-			path = AirbuildApp;
+			path = WatchpostApp;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -42,8 +42,8 @@
 		4B2A5E79F7D5BFD1F7DCE292 = {
 			isa = PBXGroup;
 			children = (
-				32FA6C0B59B4A7B42DDCEA33 /* AirbuildApp */,
-				A1B2C3D40000000000000003 /* AirbuildAppTests */,
+				32FA6C0B59B4A7B42DDCEA33 /* WatchpostApp */,
+				A1B2C3D40000000000000003 /* WatchpostAppTests */,
 				A0906AD77C76E090572F0E63 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -51,8 +51,8 @@
 		A0906AD77C76E090572F0E63 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E1D1C645818EB0816572F68E /* AirbuildApp.app */,
-				A1B2C3D40000000000000002 /* AirbuildAppTests.xctest */,
+				E1D1C645818EB0816572F68E /* WatchpostApp.app */,
+				A1B2C3D40000000000000002 /* WatchpostAppTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -60,21 +60,21 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A1B2C3D40000000000000004 /* AirbuildAppTests */ = {
+		A1B2C3D40000000000000004 /* WatchpostAppTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1B2C3D40000000000000005;
 			buildPhases = (A1B2C3D40000000000000006 /* Sources */,);
 			buildRules = ();
 			dependencies = (A1B2C3D40000000000000007 /* App dependency */,);
-			fileSystemSynchronizedGroups = (A1B2C3D40000000000000003 /* AirbuildAppTests */,);
-			name = AirbuildAppTests;
-			productName = AirbuildAppTests;
-			productReference = A1B2C3D40000000000000002 /* AirbuildAppTests.xctest */;
+			fileSystemSynchronizedGroups = (A1B2C3D40000000000000003 /* WatchpostAppTests */,);
+			name = WatchpostAppTests;
+			productName = WatchpostAppTests;
+			productReference = A1B2C3D40000000000000002 /* WatchpostAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		2E69B1330A3161295C9DCB01 /* AirbuildApp */ = {
+		2E69B1330A3161295C9DCB01 /* WatchpostApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8C42E519CFA30563C7D495EB /* Build configuration list for PBXNativeTarget "AirbuildApp" */;
+			buildConfigurationList = 8C42E519CFA30563C7D495EB /* Build configuration list for PBXNativeTarget "WatchpostApp" */;
 			buildPhases = (
 				485B7BB5562F3ABD154D4B35 /* Sources */,
 				64723A455F920BBCE48BF909 /* Resources */,
@@ -84,13 +84,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				32FA6C0B59B4A7B42DDCEA33 /* AirbuildApp */,
+				32FA6C0B59B4A7B42DDCEA33 /* WatchpostApp */,
 			);
-			name = AirbuildApp;
+			name = WatchpostApp;
 			packageProductDependencies = (
 			);
-			productName = AirbuildApp;
-			productReference = E1D1C645818EB0816572F68E /* AirbuildApp.app */;
+			productName = WatchpostApp;
+			productReference = E1D1C645818EB0816572F68E /* WatchpostApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -110,7 +110,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5075F2191BCB6FFD9AB675B1 /* Build configuration list for PBXProject "AirbuildApp" */;
+			buildConfigurationList = 5075F2191BCB6FFD9AB675B1 /* Build configuration list for PBXProject "WatchpostApp" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -124,8 +124,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2E69B1330A3161295C9DCB01 /* AirbuildApp */,
-				A1B2C3D40000000000000004 /* AirbuildAppTests */,
+				2E69B1330A3161295C9DCB01 /* WatchpostApp */,
+				A1B2C3D40000000000000004 /* WatchpostAppTests */,
 			);
 		};
 /* End PBXProject section */
@@ -159,7 +159,7 @@
 /* Begin PBXTargetDependency section */
 		A1B2C3D40000000000000007 /* App dependency */ = {
 			isa = PBXTargetDependency;
-			target = 2E69B1330A3161295C9DCB01 /* AirbuildApp */;
+			target = 2E69B1330A3161295C9DCB01 /* WatchpostApp */;
 			targetProxy = A1B2C3D40000000000000001 /* App proxy */;
 		};
 /* End PBXTargetDependency section */
@@ -169,9 +169,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				PRODUCT_BUNDLE_IDENTIFIER = build.airbuild.starter.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jakezai.watchpost-pwvw.tests;
 				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AirbuildApp.app/AirbuildApp";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchpostApp.app/WatchpostApp";
 			};
 			name = Debug;
 		};
@@ -179,9 +179,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				PRODUCT_BUNDLE_IDENTIFIER = build.airbuild.starter.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jakezai.watchpost-pwvw.tests;
 				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AirbuildApp.app/AirbuildApp";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchpostApp.app/WatchpostApp";
 			};
 			name = Release;
 		};
@@ -238,7 +238,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -257,7 +257,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_KEY_CFBundleDisplayName = "Airbuild App";
+				INFOPLIST_KEY_CFBundleDisplayName = "Watchpost";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -267,8 +267,8 @@
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = build.airbuild.starter;
-				PRODUCT_NAME = AirbuildApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jakezai.watchpost-pwvw;
+				PRODUCT_NAME = WatchpostApp;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -322,7 +322,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -340,7 +340,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_KEY_CFBundleDisplayName = "Airbuild App";
+				INFOPLIST_KEY_CFBundleDisplayName = "Watchpost";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -350,8 +350,8 @@
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = build.airbuild.starter;
-				PRODUCT_NAME = AirbuildApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jakezai.watchpost-pwvw;
+				PRODUCT_NAME = WatchpostApp;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -361,7 +361,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1B2C3D40000000000000005 /* Build configuration list for PBXNativeTarget "AirbuildAppTests" */ = {
+		A1B2C3D40000000000000005 /* Build configuration list for PBXNativeTarget "WatchpostAppTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1B2C3D40000000000000008 /* Debug */,
@@ -370,7 +370,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		5075F2191BCB6FFD9AB675B1 /* Build configuration list for PBXProject "AirbuildApp" */ = {
+		5075F2191BCB6FFD9AB675B1 /* Build configuration list for PBXProject "WatchpostApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				19E964B74B00A4CB2EF3C8A9 /* Debug */,
@@ -379,7 +379,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		8C42E519CFA30563C7D495EB /* Build configuration list for PBXNativeTarget "AirbuildApp" */ = {
+		8C42E519CFA30563C7D495EB /* Build configuration list for PBXNativeTarget "WatchpostApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2E90AD925E4ACFB91CB0744B /* Debug */,

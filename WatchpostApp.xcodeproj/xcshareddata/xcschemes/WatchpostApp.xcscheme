@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2E69B1330A3161295C9DCB01"
-               BuildableName = "AirbuildApp.app"
-               BlueprintName = "AirbuildApp"
-               ReferencedContainer = "container:AirbuildApp.xcodeproj">
+               BuildableName = "WatchpostApp.app"
+               BlueprintName = "WatchpostApp"
+               ReferencedContainer = "container:WatchpostApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2E69B1330A3161295C9DCB01"
-            BuildableName = "AirbuildApp.app"
-            BlueprintName = "AirbuildApp"
-            ReferencedContainer = "container:AirbuildApp.xcodeproj">
+            BuildableName = "WatchpostApp.app"
+            BlueprintName = "WatchpostApp"
+            ReferencedContainer = "container:WatchpostApp.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -43,9 +43,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A1B2C3D40000000000000004"
-               BuildableName = "AirbuildAppTests.xctest"
-               BlueprintName = "AirbuildAppTests"
-               ReferencedContainer = "container:AirbuildApp.xcodeproj">
+               BuildableName = "WatchpostAppTests.xctest"
+               BlueprintName = "WatchpostAppTests"
+               ReferencedContainer = "container:WatchpostApp.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -65,9 +65,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2E69B1330A3161295C9DCB01"
-            BuildableName = "AirbuildApp.app"
-            BlueprintName = "AirbuildApp"
-            ReferencedContainer = "container:AirbuildApp.xcodeproj">
+            BuildableName = "WatchpostApp.app"
+            BlueprintName = "WatchpostApp"
+            ReferencedContainer = "container:WatchpostApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
@@ -84,9 +84,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2E69B1330A3161295C9DCB01"
-            BuildableName = "AirbuildApp.app"
-            BlueprintName = "AirbuildApp"
-            ReferencedContainer = "container:AirbuildApp.xcodeproj">
+            BuildableName = "WatchpostApp.app"
+            BlueprintName = "WatchpostApp"
+            ReferencedContainer = "container:WatchpostApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
