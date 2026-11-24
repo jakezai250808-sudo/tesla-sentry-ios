@@ -2,8 +2,11 @@ import Foundation
 
 /// The offline demo: the real screens and the real model, fed from files that
 /// ship with the app instead of from a server. Everything it shows is made up.
-/// `Tools/MakeDemoMedia` draws the footage from code and writes the three files
-/// this reads (`demo-events.json`, `demo-telemetry.json` and the stills).
+/// `Tools/MakeDemoMedia` draws the footage from code and writes the files this reads
+/// (`demo-events.json`, `demo-telemetry.json`, the clips and stills, the export samples).
+/// The ones that carry words — the place names in `demo-events.json` and the export
+/// samples — ship once per language in its `.lproj` folder, and `Bundle.main` hands back the
+/// copy in the app's language, like it does for `Localizable.xcstrings`.
 ///
 /// The events are placed relative to the moment the demo is opened, so the list
 /// always starts with something from today. Every clip is 12 seconds long.

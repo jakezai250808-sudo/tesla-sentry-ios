@@ -45,6 +45,17 @@
         }
       }
     },
+    "%lld clip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 段"
+          }
+        }
+      }
+    },
     "%lld clips" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -404,6 +415,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "演示"
+          }
+        }
+      }
+    },
+    "Demo clip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "演示画面"
           }
         }
       }

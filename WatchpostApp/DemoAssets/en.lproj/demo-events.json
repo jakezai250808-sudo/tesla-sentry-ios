@@ -1,0 +1,125 @@
+{
+  "clipSeconds" : 12,
+  "events" : [
+    {
+      "camera" : 5,
+      "category" : "SentryClips",
+      "city" : "Sample City",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 6,
+      "reason" : "sentry_aware_object_detection",
+      "street" : "Sample Car Park A",
+      "triggerOffset" : 6.5
+    },
+    {
+      "camera" : 6,
+      "cameras" : [
+        "front",
+        "back",
+        "left_repeater",
+        "right_repeater"
+      ],
+      "category" : "SentryClips",
+      "city" : "Sample City",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 184,
+      "reason" : "sentry_aware_handle",
+      "street" : "Sample Car Park A",
+      "triggerOffset" : 3.2000000000000002
+    },
+    {
+      "cameras" : [
+        "front",
+        "back",
+        "left_repeater",
+        "right_repeater"
+      ],
+      "category" : "SentryClips",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 1572,
+      "reason" : "sentry_aware_door",
+      "triggerOffset" : 2
+    },
+    {
+      "camera" : 7,
+      "cameras" : [
+        "front",
+        "back",
+        "left_pillar",
+        "right_pillar"
+      ],
+      "category" : "SentryClips",
+      "city" : "Sample City",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 4351,
+      "reason" : "sentry_aware_proximity",
+      "street" : "Sample Car Park A",
+      "triggerOffset" : 8
+    },
+    {
+      "camera" : 5,
+      "cameras" : [
+        "front",
+        "back",
+        "left_pillar",
+        "right_pillar",
+        "right_repeater"
+      ],
+      "category" : "SentryClips",
+      "city" : "Sample City",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 7247,
+      "reason" : "sentry_aware_object_detection",
+      "street" : "Sample Car Park A",
+      "triggerOffset" : 5
+    },
+    {
+      "category" : "SavedClips",
+      "city" : "Sample City",
+      "footage" : "drive",
+      "groups" : 1,
+      "minutesAgo" : 1565,
+      "reason" : "user_interaction_dashcam_saved",
+      "street" : "12 Demo Road",
+      "triggerOffset" : 4
+    },
+    {
+      "category" : "SavedClips",
+      "city" : "Sample City",
+      "footage" : "drive",
+      "groups" : 1,
+      "minutesAgo" : 2920,
+      "reason" : "user_interaction_honk",
+      "street" : "12 Demo Road",
+      "triggerOffset" : 1.5
+    },
+    {
+      "category" : "RecentClips",
+      "city" : "Sample City",
+      "footage" : "drive",
+      "groups" : 2,
+      "minutesAgo" : 21,
+      "street" : "12 Demo Road"
+    },
+    {
+      "category" : "RecentClips",
+      "city" : "Sample City",
+      "footage" : "drive",
+      "groups" : 1,
+      "minutesAgo" : 9,
+      "street" : "12 Demo Road"
+    }
+  ],
+  "sync" : {
+    "archiveLimitBytes" : 2000000000000,
+    "archiveUsedBytes" : 412000000000,
+    "ffmpegAvailable" : true,
+    "lastSyncAgo" : 384,
+    "syncRunning" : false
+  }
+}

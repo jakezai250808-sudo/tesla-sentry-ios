@@ -26,6 +26,22 @@ struct DemoClipSourceTests {
 
     private func source() -> DemoClipSource { DemoClipSource(now: Self.now) }
 
+    /// What the copy of `demo-events.json` that the app reads says about an event's place.
+    private static func placeInTheAppLanguage(for footage: DemoClipSource.Footage) throws -> (city: String, street: String) {
+        let url = try #require(bundled("demo-events", "json"))
+        return try place(in: url, footage: footage)
+    }
+
+    /// The place of the first event of `footage` in one copy of `demo-events.json`, and how many events have one.
+    private static func place(in url: URL, footage: DemoClipSource.Footage) throws -> (city: String, street: String) {
+        let root = JSONValue(data: try Data(contentsOf: url))
+        for row in root["events"]?.array ?? [] where row["footage"]?.string == footage.rawValue {
+            if let city = row["city"]?.string, let street = row["street"]?.string { return (city, street) }
+        }
+        struct NoPlace: Error { let message: String }
+        throw NoPlace(message: "no event with a place on \(footage.rawValue) footage in \(url.path)")
+    }
+
     private func events() async throws -> [RecordedEvent] { try await source().events() }
 
     private func event(_ category: ClipCategory, minutesAgo: Double, in events: [RecordedEvent]) throws -> RecordedEvent {
@@ -75,6 +91,48 @@ struct DemoClipSourceTests {
         }
     }
 
+    // MARK: Language
+
+    /// The place names come from the copy of `demo-events.json` in the app's language, and the export samples
+    /// from that language's folder too: an English phone shows no Chinese place in the list and none burned
+    /// into a file it exports. A Chinese phone keeps the Chinese ones.
+    @Test(arguments: ["zh-Hans", "en"])
+    func eachLanguageHasItsOwnPlaceNamesAndExportSamples(language: String) throws {
+        let english = language == "en"
+        let city = english ? "Sample City" : "示例市"
+        let parkedStreet = english ? "Sample Car Park A" : "虚构停车场A区"
+        let driveStreet = english ? "12 Demo Road" : "演示路12号"
+        let url = try #require(Bundle.main.url(forResource: "demo-events", withExtension: "json", subdirectory: nil, localization: language),
+                               "demo-events.json in \(language)")
+        let root = JSONValue(data: try Data(contentsOf: url))
+        var placed = 0
+        for row in root["events"]?.array ?? [] {
+            guard row["city"]?.string != nil else { continue }
+            placed += 1
+            #expect(row["city"]?.string == city)
+            #expect(row["street"]?.string == (row["footage"]?.string == "parked" ? parkedStreet : driveStreet))
+        }
+        // Eight of the nine events have a place; the ninth is a car that wrote none.
+        #expect(placed == 8)
+        if english {
+            // An English name is written in English letters.
+            for name in [city, parkedStreet, driveStreet] {
+                #expect(!name.unicodeScalars.contains { $0.value > 0x2E7F })
+            }
+        }
+        // One export sample per camera of each set, in the same language's folder.
+        let samples = Camera.allCases.map { "demo-export-\($0.rawValue)" }
+            + [Camera.leftRepeater, .front, .rightRepeater, .back].map { "demo-drive-export-\($0.rawValue)" }
+        for name in samples {
+            let sample = try #require(Bundle.main.url(forResource: name, withExtension: "mp4", subdirectory: nil, localization: language), "\(name)")
+            let size = (try sample.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            #expect(size > 10_000)
+        }
+        // The list shows this copy's place.
+        let shown = try Self.place(in: url, footage: .drive)
+        #expect(shown.street == driveStreet)
+    }
+
     @Test func theCamerasComeFromTheFileOrFromTheFootage() async throws {
         let events = try await events()
         // A parked event that names no cameras has all six; the trigger camera is the number.
@@ -94,8 +152,10 @@ struct DemoClipSourceTests {
         let events = try await events()
         let parked = try event(.sentry, minutesAgo: 6, in: events)
         #expect(parked.meta.reason == "sentry_aware_object_detection")
-        #expect(parked.meta.city == "示例市")
-        #expect(parked.meta.street == "虚构停车场A区")
+        // The place is whatever the copy of demo-events.json in the app's language says.
+        let place = try Self.placeInTheAppLanguage(for: .parked)
+        #expect(parked.meta.city == place.city)
+        #expect(parked.meta.street == place.street)
         let trigger = try #require(parked.meta.timestamp)
         #expect(abs(trigger.timeIntervalSince(parked.start) - 6.5) < 0.0001)
         // A recent clip is not an event: nothing is claimed about it.

@@ -72,7 +72,7 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
 | --- | --- |
 | `WatchpostApp/Data` | Models, decoding of the server's replies, the server session, export and playback logic |
 | `WatchpostApp/Views` | The three screens: connect, events, playback |
-| `WatchpostApp/DemoAssets` | Sample footage, thumbnails and telemetry for the demo mode |
+| `WatchpostApp/DemoAssets` | Sample footage, thumbnails and telemetry for the demo mode; the export samples and place names once per language |
 | `WatchpostAppTests` | Unit tests, including a loopback server that answers like the real one |
 | `Tools` | Strings, demo-media generator and a local server helper. See [Tools/README.md](Tools/README.md) |
 

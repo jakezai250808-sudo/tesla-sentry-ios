@@ -35,9 +35,15 @@ same change. See `Strings/README.md` for details.
 `swift Tools/MakeDemoMedia/make-demo-media.swift <output-directory>` renders the demo clips
 (six cameras, parked and driving sets), thumbnails, `demo-telemetry.json` and the watermarked
 export samples into the directory given. To refresh the app's demo footage, run it with
-`WatchpostApp/DemoAssets` as the output directory and check the diff of the `.json` file.
+`WatchpostApp/DemoAssets` as the output directory and check the diff of the `.json` files.
+`--only <zh-Hans|en>` renders just that language's files and touches nothing else;
 `--still <out.png> <parked|drive> <camera> <seconds>` renders one frame for looking at a moment.
 Everything is drawn from code: no real car, place, face or plate.
+
+Two kinds of file carry words, the export samples and the place names in `demo-events.json`, so
+each language has its own copy of those in `<language>.lproj` and the app reads the copy in its
+own language. The clips, thumbnails and telemetry are shared. A new place name or strip text
+goes into `Language` in the generator; the app has no list of names of its own.
 
 ## LiveServer
 

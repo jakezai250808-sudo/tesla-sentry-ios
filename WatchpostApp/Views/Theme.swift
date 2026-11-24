@@ -149,9 +149,12 @@ struct DemoBadge: View {
                 .fixedSize()
                 .accessibilityAddTraits(.isStaticText)
         case .footage:
-            Text("Demo footage", comment: "Tag on a demo picture or video")
+            // Short on purpose: it sits in a thumbnail, where a longer tag wraps onto two lines.
+            Text("Demo clip", comment: "Tag in the corner of a demo picture or video")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .padding(.horizontal, 8)
                 .frame(minHeight: Metrics.badgeHeight)
                 .background(Color.videoOverlay, in: RoundedRectangle(cornerRadius: 6, style: .continuous))

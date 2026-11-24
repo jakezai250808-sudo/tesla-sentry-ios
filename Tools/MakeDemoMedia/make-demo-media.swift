@@ -34,22 +34,33 @@
 //     that moment on the right (see drawWatermark). The app's demo hands these
 //     out when someone exports.
 //
+// Language
+//   Only two kinds of file carry words: the export samples and demo-events.json
+//   (its place names). Each language gets its own copy of those, in its own
+//   .lproj folder, and the app reads the copy that matches its own language.
+//   The clips, the thumbnails and the telemetry are the same for every language.
+//
 // Output (written to <output-directory>; demo-* files from earlier runs that
-// this run does not produce are removed):
+// this run does not produce in the same place are removed):
 //   demo-<camera>.mp4            parked set, 640x480, 30 fps, 12 s, H.264
 //   demo-drive-<camera>.mp4      driving set
 //   demo-thumb-<camera>.png      the 5 s frame of a parked clip, 400x300
 //   demo-drive-thumb-<camera>.png
 //   demo-telemetry.json          the driving clips' telemetry in the server's
 //                                /api/telemetry wire format (25 samples)
-//   demo-export-<camera>.mp4     export samples, see "Export samples"
-//   demo-drive-export-<camera>.mp4
-//   demo-events.json             the demo's events (demoEvents below): where each
+//   zh-Hans.lproj/, en.lproj/    one folder per language, holding:
+//     demo-export-<camera>.mp4   export samples, see "Export samples"
+//     demo-drive-export-<camera>.mp4
+//     demo-events.json           the demo's events (demoEvents below): where each
 //                                one sits relative to the moment the demo is
 //                                opened, which footage it uses, and what its
 //                                event.json would say
 //
 //   swift make-demo-media.swift <output-directory>
+//     everything, for every language
+//   swift make-demo-media.swift <output-directory> --only <zh-Hans|en>
+//     just that language's files; nothing else in the directory is written or
+//     removed (to add a language, or redo one, without touching the rest)
 //   swift make-demo-media.swift --still <out.png> <parked|drive> <camera> <seconds>
 //     (one frame as PNG, for looking at a moment while working on the scenes)
 //
@@ -119,10 +130,6 @@ enum ClipSet: String, CaseIterable {
         self == .parked ? "demo-export-\(camera.rawValue).mp4" : "demo-drive-export-\(camera.rawValue).mp4"
     }
 
-    /// A made-up city and street, the same for every demo event that uses this set
-    /// (the export strip carries them too, so they cannot disagree with the list).
-    var city: String { "示例市" }
-    var street: String { self == .parked ? "虚构停车场A区" : "演示路12号" }
 
     /// Only clips recorded while driving carry telemetry.
     var hasTelemetry: Bool { self == .drive }
@@ -137,6 +144,37 @@ let signalStart = 9.0
 let signalEnd = 11.0
 let wheelbase = 2.9
 let steeringRatio = 12.0 // steering wheel degrees per degree of road wheel
+
+/// The language of the words that only some files carry: the export strip's text and the
+/// place names in `demo-events.json`. The demo ships one set of those files per language,
+/// each in its `.lproj` folder; the app reads the one that matches its own language.
+enum Language: String, CaseIterable {
+    case chinese = "zh-Hans"
+    case english = "en"
+
+    /// The folder inside the output directory that holds this language's files.
+    var folder: String { "\(rawValue).lproj" }
+
+    /// The font of the export strip. It has to have the language's glyphs.
+    var stripFont: String { self == .chinese ? "PingFangSC-Medium" : "Helvetica" }
+    var stripTextSize: CGFloat { self == .chinese ? 17 : 16 }
+
+    /// What the export strip says before the place, where a real export could be mistaken for a recording.
+    var demoFootage: String { self == .chinese ? "演示画面" : "Demo footage" }
+    var brake: String { self == .chinese ? "刹车" : "BRAKE" }
+
+    /// A made-up city and street, the same for every demo event that uses a set
+    /// (the export strip carries them too, so they cannot disagree with the list).
+    var city: String { self == .chinese ? "示例市" : "Sample City" }
+    func street(for set: ClipSet) -> String {
+        switch (self, set) {
+        case (.chinese, .parked): "虚构停车场A区"
+        case (.chinese, .drive): "演示路12号"
+        case (.english, .parked): "Sample Car Park A"
+        case (.english, .drive): "12 Demo Road"
+        }
+    }
+}
 
 func smoothstep(_ value: Double) -> Double {
     let x = min(max(value, 0), 1)
@@ -1419,12 +1457,18 @@ func drawLabel(_ context: CGContext, _ camera: Cam) {
 /// demo footage, so an exported demo file is never mistaken for a recording.
 /// And there is no date: demo events are placed relative to the day the app is
 /// opened, so a date fixed in the file could disagree with the list.
-func drawWatermark(_ context: CGContext, set: ClipSet, time: Double) {
+func drawWatermark(_ context: CGContext, set: ClipSet, time: Double, language: Language) {
     let strip: CGFloat = 36
-    let chinese = "PingFangSC-Medium"
+    let font = language.stripFont
     fill(context, rgb(16, 20, 26, alpha: 0.62), in: CGRect(x: 0, y: 0, width: CGFloat(width), height: strip))
-    drawText(context, "演示画面 · \(set.city) · \(set.street)", at: CGPoint(x: 13, y: 9), size: 17,
-             color: rgb(255, 255, 255), fontName: chinese)
+
+    // The place never runs into the readings: a name that is long in this language gives a little.
+    // 272 is what the readings below take at their widest, 13 the left margin.
+    let place = "\(language.demoFootage) · \(language.city) · \(language.street(for: set))"
+    var placeSize = language.stripTextSize
+    let room = CGFloat(width) - 13 - (set.hasTelemetry ? 272 : 10)
+    while placeSize > 13, textWidth(place, size: placeSize, fontName: font) > room { placeSize -= 1 }
+    drawText(context, place, at: CGPoint(x: 13, y: 9), size: placeSize, color: rgb(255, 255, 255), fontName: font)
     guard set.hasTelemetry else { return }
 
     let index = min(max(Int((time * 2).rounded()), 0), telemetrySamples.count - 1)
@@ -1432,7 +1476,7 @@ func drawWatermark(_ context: CGContext, set: ClipSet, time: Double) {
     let centre = strip / 2
     var x = CGFloat(width) - 10
 
-    func pill(_ text: String, width pillWidth: CGFloat, background: CGColor, textColour: CGColor = rgb(255, 255, 255), font: String = chinese) {
+    func pill(_ text: String, width pillWidth: CGFloat, background: CGColor, textColour: CGColor = rgb(255, 255, 255), font: String) {
         x -= pillWidth
         let rect = CGRect(x: x, y: centre - 12, width: pillWidth, height: 24)
         context.saveGState()
@@ -1448,8 +1492,9 @@ func drawWatermark(_ context: CGContext, set: ClipSet, time: Double) {
     pill("\(sample.throttle)%", width: 52, background: rgb(47, 124, 246, alpha: 0.92), font: "Helvetica-Bold")
     x -= 8
     let braking = sample.brake == 1
-    pill("刹车", width: 52, background: braking ? rgb(255, 69, 58, alpha: 0.95) : rgb(50, 40, 32, alpha: 0.75),
-         textColour: braking ? rgb(255, 255, 255) : rgb(214, 204, 195, alpha: 0.8))
+    pill(language.brake, width: max(52, textWidth(language.brake, size: 14, fontName: font) + 16),
+         background: braking ? rgb(255, 69, 58, alpha: 0.95) : rgb(50, 40, 32, alpha: 0.75),
+         textColour: braking ? rgb(255, 255, 255) : rgb(214, 204, 195, alpha: 0.8), font: font)
     x -= 10
     x -= 26
     fillCircle(context, rgb(89, 199, 52), centre: CGPoint(x: x + 13, y: centre), radius: 13)
@@ -1474,7 +1519,6 @@ func drawWatermark(_ context: CGContext, set: ClipSet, time: Double) {
     x -= textWidth(number, size: 21, bold: true) + 6
     drawText(context, number, at: CGPoint(x: x, y: centre - 13), size: 21, color: rgb(255, 255, 255), bold: true)
 }
-
 // MARK: - Demo events
 
 /// One event of the demo, as `demo-events.json` describes it to the app.
@@ -1531,13 +1575,16 @@ let demoSync: [String: Any] = [
     "archiveUsedBytes": 412_000_000_000, "archiveLimitBytes": 2_000_000_000_000,
 ]
 
-func demoEventsJSON() throws -> Data {
+func demoEventsJSON(language: Language) throws -> Data {
     let events: [[String: Any]] = demoEvents.map { event in
         var row: [String: Any] = [
             "category": event.category, "minutesAgo": event.minutesAgo, "groups": event.groups,
             "footage": event.footage.rawValue,
         ]
-        if event.hasPlace { row["city"] = event.footage.city; row["street"] = event.footage.street }
+        if event.hasPlace {
+            row["city"] = language.city
+            row["street"] = language.street(for: event.footage)
+        }
         row["reason"] = event.reason
         row["camera"] = event.camera
         row["triggerOffset"] = event.triggerOffset
@@ -1547,7 +1594,6 @@ func demoEventsJSON() throws -> Data {
     return try JSONSerialization.data(withJSONObject: ["clipSeconds": seconds, "events": events, "sync": demoSync],
                                        options: [.prettyPrinted, .sortedKeys])
 }
-
 // MARK: - Telemetry file
 
 /// The driving clips' telemetry exactly as `/api/telemetry` writes it.
@@ -1683,55 +1729,97 @@ if arguments.count == 6, arguments[1] == "--still" {
     exit(0)
 }
 
-guard arguments.count == 2 else {
-    FileHandle.standardError.write(Data("usage: make-demo-media.swift <output-directory>\n       make-demo-media.swift --still <out.png> <parked|drive> <camera> <seconds>\n".utf8))
+// `--only <language>`: just that language's files. Otherwise everything, for every language.
+let only = arguments.count == 4 && arguments[2] == "--only"
+guard arguments.count == 2 || only else {
+    let usage = "usage: make-demo-media.swift <output-directory>\n"
+        + "       make-demo-media.swift <output-directory> --only <zh-Hans|en>\n"
+        + "       make-demo-media.swift --still <out.png> <parked|drive> <camera> <seconds>\n"
+    FileHandle.standardError.write(Data(usage.utf8))
     exit(2)
 }
 let outputDirectory = URL(fileURLWithPath: arguments[1])
+let everything = !only
+let languages: [Language]
+if only {
+    guard let one = Language(rawValue: arguments[3]) else {
+        FileHandle.standardError.write(Data("make-demo-media.swift: unknown language \(arguments[3]); zh-Hans or en\n".utf8))
+        exit(2)
+    }
+    languages = [one]
+} else {
+    languages = Language.allCases
+}
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 
-do {
-    // Remove what earlier runs left behind (for instance demo-export-*.mp4):
-    // every demo-* file in the output directory that this run does not produce.
-    let produced = Set(ClipSet.allCases.flatMap { set in
-        set.cameras.flatMap { [set.clipName($0), set.thumbName($0), set.exportName($0)] }
-    } + ["demo-telemetry.json", "demo-events.json"])
-    for name in try FileManager.default.contentsOfDirectory(atPath: outputDirectory.path) where name.hasPrefix("demo-") && !produced.contains(name) {
-        let stale = outputDirectory.appendingPathComponent(name)
+func languageDirectory(_ language: Language) -> URL {
+    let url = outputDirectory.appendingPathComponent(language.folder, isDirectory: true)
+    try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    return url
+}
+
+/// Deletes the demo-* files in `directory` that are not in `kept` (a directory of that name is left alone).
+func removeStale(in directory: URL, keeping kept: Set<String>) throws {
+    for name in try FileManager.default.contentsOfDirectory(atPath: directory.path) where name.hasPrefix("demo-") && !kept.contains(name) {
+        let stale = directory.appendingPathComponent(name)
         var isDirectory: ObjCBool = false
         if FileManager.default.fileExists(atPath: stale.path, isDirectory: &isDirectory), !isDirectory.boolValue {
             try FileManager.default.removeItem(at: stale)
             print("removed stale \(name)")
         }
     }
+}
+
+do {
+    // Remove what earlier runs left behind, but only when this run produces everything (for instance
+    // demo-export-*.mp4 at the top level, from before the files that carry words were split by language).
+    let shared = Set(ClipSet.allCases.flatMap { set in set.cameras.flatMap { [set.clipName($0), set.thumbName($0)] } }
+                     + ["demo-telemetry.json"])
+    let perLanguage = Set(ClipSet.allCases.flatMap { set in set.cameras.map { set.exportName($0) } } + ["demo-events.json"])
+    if everything {
+        try removeStale(in: outputDirectory, keeping: shared)
+        for language in Language.allCases { try removeStale(in: languageDirectory(language), keeping: perLanguage) }
+    }
 
     let context = makeContext()
+    let frameBytes = context.bytesPerRow * height
     for set in ClipSet.allCases {
         for camera in set.cameras {
-            let clip = try H264File(url: outputDirectory.appendingPathComponent(set.clipName(camera)))
-            let exported = try H264File(url: outputDirectory.appendingPathComponent(set.exportName(camera)))
+            let clip = everything ? try H264File(url: outputDirectory.appendingPathComponent(set.clipName(camera))) : nil
+            let exported = try languages.map { try H264File(url: languageDirectory($0).appendingPathComponent(set.exportName(camera))) }
             var thumbnail = Data()
             for index in 0..<frameCount {
                 let time = Double(index) / Double(framesPerSecond)
                 beginFrame(context)
                 render(set: set, camera: camera, time: time, context: context)
                 let data = frameData(context)
-                try clip.append(data)
+                try clip?.append(data)
                 if index == Int(thumbnailTime * Double(framesPerSecond)) { thumbnail = data }
-                drawWatermark(context, set: set, time: time)
-                try exported.append(frameData(context))
+                // Every language's strip goes onto the clean frame, never onto another language's.
+                for (file, language) in zip(exported, languages) {
+                    if let bitmap = context.data { data.copyBytes(to: bitmap.assumingMemoryBound(to: UInt8.self), count: frameBytes) }
+                    drawWatermark(context, set: set, time: time, language: language)
+                    try file.append(frameData(context))
+                }
             }
-            try clip.finish()
-            try exported.finish()
-            guard !thumbnail.isEmpty else { throw failure("no frame at \(thumbnailTime) s for \(camera.rawValue)") }
-            try writePNG(scaled(try makeImage(thumbnail), toWidth: thumbnailWidth), to: outputDirectory.appendingPathComponent(set.thumbName(camera)))
-            print("wrote \(set.clipName(camera)), \(set.exportName(camera)) and \(set.thumbName(camera))")
+            try clip?.finish()
+            for file in exported { try file.finish() }
+            if everything {
+                guard !thumbnail.isEmpty else { throw failure("no frame at \(thumbnailTime) s for \(camera.rawValue)") }
+                try writePNG(scaled(try makeImage(thumbnail), toWidth: thumbnailWidth), to: outputDirectory.appendingPathComponent(set.thumbName(camera)))
+            }
+            print("wrote \(everything ? set.clipName(camera) + " and " + set.thumbName(camera) + ", " : "")\(set.exportName(camera)) for \(languages.map(\.rawValue).joined(separator: ", "))")
         }
     }
 
-    try telemetryJSON().write(to: outputDirectory.appendingPathComponent("demo-telemetry.json"), atomically: true, encoding: .utf8)
-    try demoEventsJSON().write(to: outputDirectory.appendingPathComponent("demo-events.json"), options: .atomic)
-    print("wrote demo-telemetry.json (\(telemetrySamples.count) samples) and demo-events.json (\(demoEvents.count) events)")
+    if everything {
+        try telemetryJSON().write(to: outputDirectory.appendingPathComponent("demo-telemetry.json"), atomically: true, encoding: .utf8)
+        print("wrote demo-telemetry.json (\(telemetrySamples.count) samples)")
+    }
+    for language in languages {
+        try demoEventsJSON(language: language).write(to: languageDirectory(language).appendingPathComponent("demo-events.json"), options: .atomic)
+    }
+    print("wrote demo-events.json (\(demoEvents.count) events) for \(languages.map(\.rawValue).joined(separator: ", "))")
 } catch {
     FileHandle.standardError.write(Data("make-demo-media: \(error)\n".utf8))
     exit(1)

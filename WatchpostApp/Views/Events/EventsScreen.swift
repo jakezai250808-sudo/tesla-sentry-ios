@@ -432,8 +432,12 @@ struct EventsScreen: View {
     }
 
     private func dayCount(_ day: EventDay) -> some View {
-        Text(String(format: String(localized: "%lld clips",
-                                   comment: "Number of recordings below one day header"), day.events.count))
+        // English has two forms ("1 clip"); the tables give both the same Chinese wording.
+        let count = day.events.count
+        let text = count == 1
+            ? String(format: String(localized: "%lld clip", comment: "Number of recordings below one day header, one recording"), count)
+            : String(format: String(localized: "%lld clips", comment: "Number of recordings below one day header"), count)
+        return Text(text)
             .font(.footnote)
             .monospacedDigit()
             .foregroundStyle(Color.labelSecondary)

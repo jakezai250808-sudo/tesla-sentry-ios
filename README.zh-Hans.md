@@ -52,7 +52,7 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
 | --- | --- |
 | `WatchpostApp/Data` | 模型、服务器回复的解析、服务器会话、导出与回放逻辑 |
 | `WatchpostApp/Views` | 三个界面：连接、事件、回放 |
-| `WatchpostApp/DemoAssets` | 演示模式用的样例画面、缩略图和遥测 |
+| `WatchpostApp/DemoAssets` | 演示模式用的样例画面、缩略图和遥测；导出样例和地名按语言各一份 |
 | `WatchpostAppTests` | 单元测试，含一个按真实服务器方式应答的回环服务器 |
 | `Tools` | 文案、演示素材生成器、本机服务器小工具。见 [Tools/README.md](Tools/README.md) |
 
