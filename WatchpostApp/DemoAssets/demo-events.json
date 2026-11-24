@@ -1,0 +1,125 @@
+{
+  "clipSeconds" : 12,
+  "events" : [
+    {
+      "camera" : 5,
+      "category" : "SentryClips",
+      "city" : "示例市",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 6,
+      "reason" : "sentry_aware_object_detection",
+      "street" : "虚构停车场A区",
+      "triggerOffset" : 6.5
+    },
+    {
+      "camera" : 6,
+      "cameras" : [
+        "front",
+        "back",
+        "left_repeater",
+        "right_repeater"
+      ],
+      "category" : "SentryClips",
+      "city" : "示例市",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 184,
+      "reason" : "sentry_aware_handle",
+      "street" : "虚构停车场A区",
+      "triggerOffset" : 3.2000000000000002
+    },
+    {
+      "cameras" : [
+        "front",
+        "back",
+        "left_repeater",
+        "right_repeater"
+      ],
+      "category" : "SentryClips",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 1572,
+      "reason" : "sentry_aware_door",
+      "triggerOffset" : 2
+    },
+    {
+      "camera" : 7,
+      "cameras" : [
+        "front",
+        "back",
+        "left_pillar",
+        "right_pillar"
+      ],
+      "category" : "SentryClips",
+      "city" : "示例市",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 4351,
+      "reason" : "sentry_aware_proximity",
+      "street" : "虚构停车场A区",
+      "triggerOffset" : 8
+    },
+    {
+      "camera" : 5,
+      "cameras" : [
+        "front",
+        "back",
+        "left_pillar",
+        "right_pillar",
+        "right_repeater"
+      ],
+      "category" : "SentryClips",
+      "city" : "示例市",
+      "footage" : "parked",
+      "groups" : 1,
+      "minutesAgo" : 7247,
+      "reason" : "sentry_aware_object_detection",
+      "street" : "虚构停车场A区",
+      "triggerOffset" : 5
+    },
+    {
+      "category" : "SavedClips",
+      "city" : "示例市",
+      "footage" : "drive",
+      "groups" : 1,
+      "minutesAgo" : 1565,
+      "reason" : "user_interaction_dashcam_saved",
+      "street" : "演示路12号",
+      "triggerOffset" : 4
+    },
+    {
+      "category" : "SavedClips",
+      "city" : "示例市",
+      "footage" : "drive",
+      "groups" : 1,
+      "minutesAgo" : 2920,
+      "reason" : "user_interaction_honk",
+      "street" : "演示路12号",
+      "triggerOffset" : 1.5
+    },
+    {
+      "category" : "RecentClips",
+      "city" : "示例市",
+      "footage" : "drive",
+      "groups" : 2,
+      "minutesAgo" : 21,
+      "street" : "演示路12号"
+    },
+    {
+      "category" : "RecentClips",
+      "city" : "示例市",
+      "footage" : "drive",
+      "groups" : 1,
+      "minutesAgo" : 9,
+      "street" : "演示路12号"
+    }
+  ],
+  "sync" : {
+    "archiveLimitBytes" : 2000000000000,
+    "archiveUsedBytes" : 412000000000,
+    "ffmpegAvailable" : true,
+    "lastSyncAgo" : 384,
+    "syncRunning" : false
+  }
+}

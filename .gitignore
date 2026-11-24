@@ -2,3 +2,7 @@
 build/
 *.xcuserstate
 xcuserdata/
+__pycache__/
+
+# Password for the local test server: a throwaway value that stays out of the repository.
+Tools/LiveServer/password.txt
