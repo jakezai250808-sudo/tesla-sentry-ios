@@ -5,5 +5,5 @@ import Foundation
 enum SupportPages {
     /// The privacy policy. The connect screen and the servers list link to it, as Apple requires
     /// a link to the policy inside the app (App Review guideline 5.1.1).
-    static let privacyPolicy = URL(string: "https://watchpost.example.invalid/privacy")!
+    static let privacyPolicy = URL(string: "https://watchpost-pwvw.airhost.site/privacy/")!
 }
