@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Privacy information for Watchpost 1.0 (builds 2 and 3): app-to-server requests, local storage, sharing, retention, deletion and support contact.">
+  <meta name="color-scheme" content="light dark">
+  <title>Watchpost privacy · 岗哨隐私说明</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect x=%224%22 y=%228%22 width=%2256%22 height=%2248%22 rx=%228%22 fill=%22%23005FCC%22/%3E%3Cpath d=%22M26 20 46 32 26 44Z%22 fill=%22white%22/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-tools">
+      <nav class="language-links" aria-label="Language / 语言">
+        <a href="#en" lang="en" hreflang="en">English</a>
+        <a href="#zh" lang="zh-Hans" hreflang="zh-Hans">简体中文</a>
+      </nav>
+    </header>
+    <main>
+<article class="language-region privacy" id="zh" lang="zh-Hans" tabindex="-1">
+<header class="document-header">
+<h1>岗哨隐私说明</h1>
+<p class="policy-meta">运营者：<span data-fact="operator">杭州余杭艾闪饰品店</span><br>生效日期：<span data-fact="effective-date">2026-11-25</span></p>
+<p class="lede">适用于岗哨 1.0（构建2和3），即 tesla-sentry-f50 的独立 iPhone 客户端。本说明覆盖客户端与我们的支持联系渠道，不替你运行的服务器或你选择的分享工具制定政策。</p>
+</header>
+<section class="document-section">
+<h2>1. App 处理什么数据</h2>
+<p>岗哨不创建自己的账号，不把 App 使用情况或录像发送到开发者运营的 App 后端。岗哨不会跟踪你。此版本不含统计、广告或第三方崩溃上报 SDK。</p>
+<p>连接时，App 把管理员密码发送到你填写的服务器地址，并使用该服务器返回的会话凭据。HTTP 连接未加密，不填写协议时也会使用 HTTP。请在可信网络使用，或为已配置 HTTPS 的服务器明确填写 https://。浏览、回放和导出时，请求会指明你所选的录像、镜头和清晰度。服务器能够收到你的网络地址和这些请求。</p>
+<p>App 从该服务器接收录像、缩略图、事件时间、城市和街道、录像中的车辆坐标、存储信息和已有行车遥测。录像中的车辆位置不同于手机当前位置：此版本不请求手机定位权限。本地网络权限用于连接局域网服务器。演示模式使用随 App 提供的虚构素材。</p>
+</section>
+<section class="document-section">
+<h2>2. 用途与手机本地存储</h2>
+<p>连接资料用于访问服务器并在之后重新连接。已保存的服务器列表包含地址、添加和上次使用时间、偏好的清晰度，以及服务器报告的版本，存放在 App 偏好设置中；上次使用的服务器也记录在这里。</p>
+<p>每台服务器的密码和会话分别保存在本设备的 iOS 钥匙串中；身份验证需要时会传给该服务器。App 请求你选择的录像，显示已有元数据和遥测，并让服务器准备导出视频。缩略图缓存在内存中；已完成的导出以 App 临时文件形式存到手机，供分享使用。App 的请求客户端关闭了自身的 URL 缓存，iOS 媒体播放仍可能缓冲数据。</p>
+</section>
+<section class="document-section">
+<h2>3. 服务器、分享与其他服务</h2>
+<p>服务器由你或其管理员选择和运行。我们不运营这台服务器，也不控制它的日志、处理地域、保留、备份及其他集成。它可能依照自身配置保留请求记录和导出文件；具体规则请向管理员了解。</p>
+<p>导出文件可能含录像、水印及服务器提供的其他信息，不应假定位置或身份信息已经移除。使用系统分享面板时，文件会交给你选择的目标 App 或服务，对方按自身规则处理收到的副本。</p>
+<p>TestFlight 分发，以及通过其测试服务提供的反馈或诊断，由 Apple 处理。你主动发邮件时，邮件服务会参与传送这次通信，详见第6节。这些可选渠道独立于 App 与自建服务器之间的日常请求。</p>
+<p>打开“隐私政策”会在浏览器中访问网站，网站托管方能够收到你的网络地址和页面请求。</p>
+</section>
+<section class="document-section">
+<h2>4. 保留与删除</h2>
+<p>保存的服务器资料和钥匙串凭据用于之后重新连接，移除前会保留。移除路径为：“服务器”→“返回连接页”，在“已保存的服务器”中打开该台服务器的“更多操作”菜单，选择“移除”。App 会删除本机连接记录，并尝试删除对应的钥匙串密码和会话。App 不会确认已存凭据是否移除成功；移除连接也不会撤销服务器上的会话。</p>
+<p>完成的导出是 App 临时文件。此版本没有专门的清理导出入口或保证的删除时间；分享、关闭导出面板和移除已保存的服务器都不会触发已完成导出的清理。你保存到“文件”或分享出去的副本，需要在对应位置管理。</p>
+<p>移除本机连接不会删除服务器录像、日志、备份、导出任务或远程会话。服务器保留和删除规则由管理员及配置决定，App 不为其设定期限。请向该管理员申请删除服务器持有的数据或撤销访问权限。</p>
+</section>
+<section class="document-section">
+<h2>5. 停止访问</h2>
+<p>在“服务器”中选择“返回连接页”，会离开当前连接并清除显示的列表和缩略图内存，但保留已保存的连接供以后使用。不想继续保存时，请按上一节移除连接。你也可以在 iPhone“设置”中关闭岗哨的本地网络权限；这一权限只涉及局域网服务器访问。</p>
+<p>停止导出只停止 App 这次等待或下载，服务器可能继续已经收到的任务。修改 App 设置、移除连接或停止本机等待，都不会撤回已经送达的请求、下载文件或分享副本。服务器端的权限和数据须使用服务器自己的管理方式处理。</p>
+</section>
+<section class="document-section">
+<h2>6. 支持与隐私联系</h2>
+<p>如需支持或提出隐私问题，请联系 <a href="mailto:support@tessyun.com">support@tessyun.com</a>。你主动发邮件时，我们会收到你提供的邮箱地址、正文和附件，以处理这次请求。请不要发送密码、会话凭据或私人录像。如需核查或移除你向支持渠道提供的信息，请通过同一邮箱提出。</p>
+<p>客服邮件的实际保留期限、邮件服务日志及备份的删除规则目前尚未核实。我们不承诺自动删除或固定清除时限；如需申请删除你提供的信息，请联系同一邮箱。</p>
+</section>
+<footer class="site-footer">
+<p class="copyright">© <span data-fact="publication-year">2026</span> <span data-fact="operator">杭州余杭艾闪饰品店</span>。</p>
+<nav class="footer-links" aria-label="页脚导航">
+<a href="../#zh">首页</a>
+<a href="../support/#zh">支持</a>
+<a href="../privacy/#zh">隐私</a>
+<a class="made-with-airbuild" href="https://air.build/?utm_source=made-with-airbuild&amp;utm_medium=website"><svg aria-hidden="true" width="0.9em" height="0.9em" viewBox="0 0 256 256" fill="currentColor" style="vertical-align: -0.1em; margin-inline-end: 0.35em"><path d="M89.5996 0C103.041 0 109.762 0.000398636 114.896 2.61621C119.411 4.91717 123.083 8.5886 125.384 13.1045C128 18.2384 128 24.9592 128 38.4004V55.7365C128 55.882 128.118 56 128.263 56C128.396 56 128.508 55.9001 128.525 55.7683C132.565 24.3101 159.443 0 192 0C227.346 0 256 28.6538 256 64C256 96.4664 231.825 123.285 200.494 127.439C200.213 127.477 200 127.716 200 128C200 128.283 200.213 128.522 200.494 128.56C231.825 132.714 256 159.534 256 192C256 227.346 227.346 256 192 256C159.533 256 132.714 231.825 128.56 200.494C128.522 200.213 128.283 200 128 200C127.717 200 127.478 200.213 127.44 200.494C123.286 231.825 96.4666 256 64 256C28.6538 256 0 227.346 0 192C0 159.443 24.3101 132.565 55.7683 128.525C55.9001 128.508 56 128.396 56 128.263C56 128.118 55.882 128 55.7365 128H38.4004C24.9592 128 18.2384 128 13.1045 125.384C8.5886 123.083 4.91717 119.411 2.61621 114.896C0.000398636 109.762 0 103.041 0 89.5996V38.4004C0 24.9592 0.000398636 18.2384 2.61621 13.1045C4.91717 8.5886 8.5886 4.91717 13.1045 2.61621C18.2384 0.000398636 24.9592 0 38.4004 0H89.5996ZM112 80C100.799 80 95.1982 79.9998 90.9199 82.1797C87.1568 84.0971 84.0971 87.1568 82.1797 90.9199C79.9998 95.1982 80 100.799 80 112V144C80 155.201 79.9998 160.802 82.1797 165.08C84.0971 168.843 87.1568 171.903 90.9199 173.82C95.1982 176 100.799 176 112 176H144C155.201 176 160.802 176 165.08 173.82C168.843 171.903 171.903 168.843 173.82 165.08C176 160.802 176 155.201 176 144V112C176 100.799 176 95.1982 173.82 90.9199C171.903 87.1568 168.843 84.0971 165.08 82.1797C160.802 79.9998 155.201 80 144 80H112Z"/></svg>使用 AirBuild 构建</a>
+</nav>
+</footer>
+
+</article>
+<article class="language-region privacy" id="en" lang="en" tabindex="-1">
+<header class="document-header">
+<h1>Watchpost privacy</h1>
+<p class="policy-meta">Operator: <span data-fact="operator">杭州余杭艾闪饰品店</span><br>Effective: <span data-fact="effective-date">2026-11-25</span></p>
+<p class="lede">Applies to Watchpost 1.0 (builds 2 and 3), the independent iPhone client for tesla-sentry-f50. This policy describes the client and our support contact. It does not set the policy for a server you run or an app you choose for sharing.</p>
+</header>
+<section class="document-section">
+<h2>1. Data handled by the app</h2>
+<p>Watchpost does not create a Watchpost account or send app usage or recordings to a developer-operated app backend. Watchpost does not track you. This version has no analytics, advertising or third-party crash-reporting SDK.</p>
+<p>When you connect, the app sends the admin password to the server address you entered and uses the session cookie that server returns. HTTP is unencrypted, and omitting the scheme uses HTTP. Use a trusted network, or enter https:// for a server configured with HTTPS. Browsing, playback and export send requests identifying the recordings, camera and quality you ask for. The server can receive your network address and those requests.</p>
+<p>The app receives recordings, thumbnails, event times, city and street information, recorded vehicle coordinates, storage information and available driving telemetry from that server. Recorded vehicle location is different from your iPhone's location: this version does not request phone-location access. Local Network permission lets the app reach a server on your local network. Demo mode uses fictional material bundled with the app.</p>
+</section>
+<section class="document-section">
+<h2>2. Purpose and storage on your phone</h2>
+<p>Connection information is used to reach your server and remember it for later. The saved server list includes its address, creation and last-use times, preferred playback quality and reported server version. It is stored in the app's preferences; the last-used server is remembered there too.</p>
+<p>Each server's password and session are saved separately for this device in the iOS Keychain. They are transmitted to that server when needed for authentication. Requests load and play the recordings you select, display available metadata and telemetry, and ask your server to prepare an export. Thumbnails are cached in memory. Completed export videos are saved as temporary app files for sharing. The app's request client disables its URL cache; iOS media playback may still buffer data.</p>
+</section>
+<section class="document-section">
+<h2>3. Servers, sharing and other services</h2>
+<p>The server is selected and operated by you or its administrator. We do not operate that server or control its logs, hosting location, retention, backups or other integrations. It may keep requests and exported files according to its configuration. Contact its administrator about those practices.</p>
+<p>Exports can contain the recording, watermark and other information supplied by your server. Do not assume location or identifying details have been removed. Using the iOS share sheet passes the file to the destination you choose; that app or service then handles its own copy under its own policy.</p>
+<p>Apple handles TestFlight distribution and any testing feedback or diagnostics through its testing services. If you send us email, your email service and ours handle that communication; see section 6. These optional channels are separate from normal app-to-server requests.</p>
+<p>Opening Privacy Policy opens the website in your browser. The website host can receive your network address and the page request.</p>
+</section>
+<section class="document-section">
+<h2>4. Retention and deletion</h2>
+<p>Saved server preferences and Keychain entries are retained for reconnecting until removed. To remove a saved server, go to Servers → Back to connect screen, then open its More menu in Saved servers and choose Remove. The app removes its connection record and attempts to delete the corresponding Keychain password and session. The app does not confirm whether removing stored credentials succeeded. Removing a connection also does not revoke the session on the server.</p>
+<p>Completed exports are temporary app files. This version has no dedicated clear-exports control or guaranteed deletion time. Sharing, closing the export sheet and removing a saved server do not trigger completed-export cleanup. Copies you saved to Files or shared elsewhere must be managed in those destinations.</p>
+<p>Removing a local connection does not delete server recordings, logs, backups, export jobs or remote sessions. Server retention and deletion depend on the administrator and server configuration; this app does not set a time limit for them. Ask that administrator to remove server-held data or revoke access.</p>
+</section>
+<section class="document-section">
+<h2>5. Stopping access</h2>
+<p>Servers → Back to connect screen leaves the current connection and clears its displayed list and thumbnail memory, while keeping saved connections for later use. Remove saved connections as described above if you no longer want them remembered. You can also revoke Local Network permission for Watchpost in iPhone Settings; that permission only concerns access to local-network servers.</p>
+<p>Stopping an export stops waiting or downloading in the app; the server may continue a job it already received. Changing app settings, removing a connection or ending a local wait does not recall requests, downloaded files or shared copies already delivered. Use the server's own controls for server-side access and data.</p>
+</section>
+<section class="document-section">
+<h2>6. Support and privacy contact</h2>
+<p>Email <a href="mailto:support@tessyun.com">support@tessyun.com</a> for support or a privacy question. If you email us, we receive the email address, message and attachments you choose to send so we can handle that request. Please leave out passwords, session credentials and private recordings. Ask through the same address if you want us to review or remove information you supplied to support.</p>
+<p>The retention period for support email and the deletion rules for email-provider logs and backups have not yet been verified. We do not promise automatic deletion or a fixed removal time for those records. Contact the same address to request deletion of information you provided.</p>
+</section>
+<footer class="site-footer">
+<p class="copyright">© <span data-fact="publication-year">2026</span> <span data-fact="operator">杭州余杭艾闪饰品店</span>.</p>
+<nav class="footer-links" aria-label="Footer">
+<a href="../#en">Home</a>
+<a href="../support/#en">Support</a>
+<a href="../privacy/#en">Privacy</a>
+<a class="made-with-airbuild" href="https://air.build/?utm_source=made-with-airbuild&amp;utm_medium=website"><svg aria-hidden="true" width="0.9em" height="0.9em" viewBox="0 0 256 256" fill="currentColor" style="vertical-align: -0.1em; margin-inline-end: 0.35em"><path d="M89.5996 0C103.041 0 109.762 0.000398636 114.896 2.61621C119.411 4.91717 123.083 8.5886 125.384 13.1045C128 18.2384 128 24.9592 128 38.4004V55.7365C128 55.882 128.118 56 128.263 56C128.396 56 128.508 55.9001 128.525 55.7683C132.565 24.3101 159.443 0 192 0C227.346 0 256 28.6538 256 64C256 96.4664 231.825 123.285 200.494 127.439C200.213 127.477 200 127.716 200 128C200 128.283 200.213 128.522 200.494 128.56C231.825 132.714 256 159.534 256 192C256 227.346 227.346 256 192 256C159.533 256 132.714 231.825 128.56 200.494C128.522 200.213 128.283 200 128 200C127.717 200 127.478 200.213 127.44 200.494C123.286 231.825 96.4666 256 64 256C28.6538 256 0 227.346 0 192C0 159.443 24.3101 132.565 55.7683 128.525C55.9001 128.508 56 128.396 56 128.263C56 128.118 55.882 128 55.7365 128H38.4004C24.9592 128 18.2384 128 13.1045 125.384C8.5886 123.083 4.91717 119.411 2.61621 114.896C0.000398636 109.762 0 103.041 0 89.5996V38.4004C0 24.9592 0.000398636 18.2384 2.61621 13.1045C4.91717 8.5886 8.5886 4.91717 13.1045 2.61621C18.2384 0.000398636 24.9592 0 38.4004 0H89.5996ZM112 80C100.799 80 95.1982 79.9998 90.9199 82.1797C87.1568 84.0971 84.0971 87.1568 82.1797 90.9199C79.9998 95.1982 80 100.799 80 112V144C80 155.201 79.9998 160.802 82.1797 165.08C84.0971 168.843 87.1568 171.903 90.9199 173.82C95.1982 176 100.799 176 112 176H144C155.201 176 160.802 176 165.08 173.82C168.843 171.903 171.903 168.843 173.82 165.08C176 160.802 176 155.201 176 144V112C176 100.799 176 95.1982 173.82 90.9199C171.903 87.1568 168.843 84.0971 165.08 82.1797C160.802 79.9998 155.201 80 144 80H112Z"/></svg>Made with AirBuild</a>
+</nav>
+</footer>
+
+</article>
+    </main>
+  </div>
+</body>
+</html>

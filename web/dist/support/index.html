@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Help with Watchpost, the iPhone viewer for your own tesla-sentry-f50 server. Contact support and read answers about connection, playback and export.">
+  <meta name="color-scheme" content="light dark">
+  <title>Watchpost support · 岗哨支持</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect x=%224%22 y=%228%22 width=%2256%22 height=%2248%22 rx=%228%22 fill=%22%23005FCC%22/%3E%3Cpath d=%22M26 20 46 32 26 44Z%22 fill=%22white%22/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-tools">
+      <nav class="language-links" aria-label="Language / 语言">
+        <a href="#en" lang="en" hreflang="en">English</a>
+        <a href="#zh" lang="zh-Hans" hreflang="zh-Hans">简体中文</a>
+      </nav>
+    </header>
+    <main>
+<article class="language-region support" id="zh" lang="zh-Hans" tabindex="-1">
+<header class="document-header">
+<h1>岗哨支持</h1>
+<p class="lede">岗哨是在 iPhone 上查看自建 tesla-sentry-f50 服务器录像的客户端。</p>
+</header>
+<section class="document-section">
+<h2>联系支持</h2>
+<p>如需 App 使用帮助，请发邮件至 <a href="mailto:support@tessyun.com">support@tessyun.com</a>，说明 App 版本、iOS 版本和遇到的情况。不要发送管理员密码、会话凭据或私人录像；截图请先遮住地址、位置和其他个人信息。回复时间视具体情况而定，暂无保证的回复时限。</p>
+</section>
+<section class="document-section">
+<h2>1. 连接需要什么？</h2>
+<p>需要装有 iOS 18 或更高版本的 iPhone、兼容的 tesla-sentry-f50 服务器地址，以及管理员密码。地址有端口时请一并填写。不填写协议时会使用 HTTP；要使用服务器的 HTTPS，请明确填写 https://。岗哨不提供服务器，也不要求另建岗哨账号。连接页的“体验演示”使用内置虚构样例，不连接服务器。</p>
+</section>
+<section class="document-section">
+<h2>2. 为什么连接失败？</h2>
+<p>请检查地址、端口和管理员密码，确认手机能够访问服务器。连接局域网服务器时，请在 iPhone“设置”中允许岗哨使用本地网络。若提示证书问题，请检查服务器证书；App 不提供绕过证书验证的入口。HTTP 连接未加密，请只在可信网络使用，或为服务器配置 HTTPS。</p>
+</section>
+<section class="document-section">
+<h2>3. 为什么有些读数缺失，或正在播放原画？</h2>
+<p>App 只能显示录像实际包含的数据。缺失的遥测显示“—”，不表示当时数值为零。服务器尚在准备较低清晰度的片段时，App 可能先播放原画，并显示相应提示。</p>
+</section>
+<section class="document-section">
+<h2>4. 导出做了什么？</h2>
+<p>App 请求服务器生成单分钟、单镜头的带水印视频，下载到手机后交给系统分享面板。服务器缺少水印生成条件时可能拒绝导出，请在浏览器中检查服务器。“停止等待”只结束 App 这次等待或下载；已经交给服务器的任务仍可能继续。是否保存或发送，由你在分享面板中选择。</p>
+</section>
+<section class="document-section">
+<h2>5. 怎样移除已保存的服务器？</h2>
+<p>打开“服务器”，选择“返回连接页”。在“已保存的服务器”中打开该台服务器的“更多操作”菜单，选择“移除”并确认。App 会移除本机连接记录，并尝试移除保存的密码和会话。此操作不会删除服务器录像、服务器导出任务、已经完成的手机临时导出文件，以及你另存或分享的视频。服务器上的数据与访问权限需在服务器端管理。存储细节见隐私说明。</p>
+</section>
+<section class="document-section">
+<h2>与网页查看器的差异</h2>
+<p>首次打开事件、按触发点定位时，如果触发点距本段开头不足 5 秒，岗哨从本段 0 秒开始；网页查看器在存在前一段时，会从前一段末尾开始。</p>
+<p>触发镜头在事件中没有可用录像、而触发时刻所在片段仍有其他镜头时，岗哨使用替代镜头在触发时刻的画面作为列表封面；网页查看器回到默认封面，取默认镜头的第 1 秒画面。</p>
+</section>
+<footer class="site-footer">
+<p class="copyright">© <span data-fact="publication-year">2026</span> <span data-fact="operator">杭州余杭艾闪饰品店</span>。</p>
+<nav class="footer-links" aria-label="页脚导航">
+<a href="../#zh">首页</a>
+<a href="../support/#zh">支持</a>
+<a href="../privacy/#zh">隐私</a>
+<a class="made-with-airbuild" href="https://air.build/?utm_source=made-with-airbuild&amp;utm_medium=website"><svg aria-hidden="true" width="0.9em" height="0.9em" viewBox="0 0 256 256" fill="currentColor" style="vertical-align: -0.1em; margin-inline-end: 0.35em"><path d="M89.5996 0C103.041 0 109.762 0.000398636 114.896 2.61621C119.411 4.91717 123.083 8.5886 125.384 13.1045C128 18.2384 128 24.9592 128 38.4004V55.7365C128 55.882 128.118 56 128.263 56C128.396 56 128.508 55.9001 128.525 55.7683C132.565 24.3101 159.443 0 192 0C227.346 0 256 28.6538 256 64C256 96.4664 231.825 123.285 200.494 127.439C200.213 127.477 200 127.716 200 128C200 128.283 200.213 128.522 200.494 128.56C231.825 132.714 256 159.534 256 192C256 227.346 227.346 256 192 256C159.533 256 132.714 231.825 128.56 200.494C128.522 200.213 128.283 200 128 200C127.717 200 127.478 200.213 127.44 200.494C123.286 231.825 96.4666 256 64 256C28.6538 256 0 227.346 0 192C0 159.443 24.3101 132.565 55.7683 128.525C55.9001 128.508 56 128.396 56 128.263C56 128.118 55.882 128 55.7365 128H38.4004C24.9592 128 18.2384 128 13.1045 125.384C8.5886 123.083 4.91717 119.411 2.61621 114.896C0.000398636 109.762 0 103.041 0 89.5996V38.4004C0 24.9592 0.000398636 18.2384 2.61621 13.1045C4.91717 8.5886 8.5886 4.91717 13.1045 2.61621C18.2384 0.000398636 24.9592 0 38.4004 0H89.5996ZM112 80C100.799 80 95.1982 79.9998 90.9199 82.1797C87.1568 84.0971 84.0971 87.1568 82.1797 90.9199C79.9998 95.1982 80 100.799 80 112V144C80 155.201 79.9998 160.802 82.1797 165.08C84.0971 168.843 87.1568 171.903 90.9199 173.82C95.1982 176 100.799 176 112 176H144C155.201 176 160.802 176 165.08 173.82C168.843 171.903 171.903 168.843 173.82 165.08C176 160.802 176 155.201 176 144V112C176 100.799 176 95.1982 173.82 90.9199C171.903 87.1568 168.843 84.0971 165.08 82.1797C160.802 79.9998 155.201 80 144 80H112Z"/></svg>使用 AirBuild 构建</a>
+</nav>
+</footer>
+</article>
+<article class="language-region support" id="en" lang="en" tabindex="-1">
+<header class="document-header">
+<h1>Watchpost support</h1>
+<p class="lede">Watchpost is an iPhone viewer for recordings on your own tesla-sentry-f50 server.</p>
+</header>
+<section class="document-section">
+<h2>Contact</h2>
+<p>Email <a href="mailto:support@tessyun.com">support@tessyun.com</a> for help with the app. Tell us your app version, iOS version and what happened. Do not send your admin password, session cookie or private recordings. Redact addresses, locations and other personal information from screenshots. Response times vary; no response time is guaranteed.</p>
+</section>
+<section class="document-section">
+<h2>1. What do I need to connect?</h2>
+<p>Use an iPhone running iOS 18 or later, your compatible tesla-sentry-f50 server address, and its admin password. Include the port if your server uses one. Omitting the scheme uses HTTP; enter https:// explicitly to use your server's HTTPS. Watchpost does not provide a server or require a separate Watchpost account. On the connect screen, Try demo opens fictional sample recordings without connecting to a server.</p>
+</section>
+<section class="document-section">
+<h2>2. Why can't I connect?</h2>
+<p>Check the address, port and admin password. Make sure the phone can reach the server. For a server on your local network, allow Local Network for Watchpost in iPhone Settings. Check a reported certificate problem on your server; the app does not offer a way to bypass certificate checks. HTTP connections are unencrypted: use a network you trust, or configure HTTPS on your server.</p>
+</section>
+<section class="document-section">
+<h2>3. Why are some readings missing, or playback using Original?</h2>
+<p>The app can only show data present in the recording. Missing telemetry appears as “—”; it does not mean the recorded value was zero. While your server prepares a lower-quality version, playback may use Original and say so.</p>
+</section>
+<section class="document-section">
+<h2>4. What does export do?</h2>
+<p>Export asks your server to generate one watermarked minute from one camera. It downloads the result to the phone for the system share sheet. A server without the required watermark support may refuse the export; check the server in a browser. Stop waiting ends the app's wait or download; a job already sent to the server may continue there. Saving or sending from the share sheet is your choice.</p>
+</section>
+<section class="document-section">
+<h2>5. How do I remove a saved server?</h2>
+<p>Open Servers and choose Back to connect screen. In Saved servers, open that server's More menu and choose Remove, then confirm. The app removes the local connection record and attempts to remove its saved password and session. It does not delete recordings or export jobs on the server, completed temporary export files, or videos you saved or shared elsewhere. Manage server data and access on that server. See Privacy for the storage details.</p>
+</section>
+<section class="document-section">
+<h2>Differences from the web viewer</h2>
+<p>When an event is first opened at its trigger point and the trigger is less than five seconds into a clip, Watchpost starts at 0:00 in that clip. The web viewer starts near the end of the previous clip, if one is available.</p>
+<p>If the triggering camera has no recording in the event but other cameras have footage in the clip containing the trigger, Watchpost uses another available camera's frame at the trigger time for the event thumbnail. The web viewer falls back to its default thumbnail, taken one second into the default camera's recording.</p>
+</section>
+<footer class="site-footer">
+<p class="copyright">© <span data-fact="publication-year">2026</span> <span data-fact="operator">杭州余杭艾闪饰品店</span>.</p>
+<nav class="footer-links" aria-label="Footer">
+<a href="../#en">Home</a>
+<a href="../support/#en">Support</a>
+<a href="../privacy/#en">Privacy</a>
+<a class="made-with-airbuild" href="https://air.build/?utm_source=made-with-airbuild&amp;utm_medium=website"><svg aria-hidden="true" width="0.9em" height="0.9em" viewBox="0 0 256 256" fill="currentColor" style="vertical-align: -0.1em; margin-inline-end: 0.35em"><path d="M89.5996 0C103.041 0 109.762 0.000398636 114.896 2.61621C119.411 4.91717 123.083 8.5886 125.384 13.1045C128 18.2384 128 24.9592 128 38.4004V55.7365C128 55.882 128.118 56 128.263 56C128.396 56 128.508 55.9001 128.525 55.7683C132.565 24.3101 159.443 0 192 0C227.346 0 256 28.6538 256 64C256 96.4664 231.825 123.285 200.494 127.439C200.213 127.477 200 127.716 200 128C200 128.283 200.213 128.522 200.494 128.56C231.825 132.714 256 159.534 256 192C256 227.346 227.346 256 192 256C159.533 256 132.714 231.825 128.56 200.494C128.522 200.213 128.283 200 128 200C127.717 200 127.478 200.213 127.44 200.494C123.286 231.825 96.4666 256 64 256C28.6538 256 0 227.346 0 192C0 159.443 24.3101 132.565 55.7683 128.525C55.9001 128.508 56 128.396 56 128.263C56 128.118 55.882 128 55.7365 128H38.4004C24.9592 128 18.2384 128 13.1045 125.384C8.5886 123.083 4.91717 119.411 2.61621 114.896C0.000398636 109.762 0 103.041 0 89.5996V38.4004C0 24.9592 0.000398636 18.2384 2.61621 13.1045C4.91717 8.5886 8.5886 4.91717 13.1045 2.61621C18.2384 0.000398636 24.9592 0 38.4004 0H89.5996ZM112 80C100.799 80 95.1982 79.9998 90.9199 82.1797C87.1568 84.0971 84.0971 87.1568 82.1797 90.9199C79.9998 95.1982 80 100.799 80 112V144C80 155.201 79.9998 160.802 82.1797 165.08C84.0971 168.843 87.1568 171.903 90.9199 173.82C95.1982 176 100.799 176 112 176H144C155.201 176 160.802 176 165.08 173.82C168.843 171.903 171.903 168.843 173.82 165.08C176 160.802 176 155.201 176 144V112C176 100.799 176 95.1982 173.82 90.9199C171.903 87.1568 168.843 84.0971 165.08 82.1797C160.802 79.9998 155.201 80 144 80H112Z"/></svg>Made with AirBuild</a>
+</nav>
+</footer>
+</article>
+    </main>
+  </div>
+</body>
+</html>
