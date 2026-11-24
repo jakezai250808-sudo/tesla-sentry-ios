@@ -77,6 +77,9 @@ struct ConnectScreen: View {
                     savedServers
                         .padding(.top, Metrics.groupSpacing)
                 }
+
+                privacyPolicyLink
+                    .padding(.top, Metrics.groupSpacing)
             }
             .padding(.horizontal, Metrics.side)
             .padding(.top, 16)
@@ -103,6 +106,16 @@ struct ConnectScreen: View {
         }
         .onChange(of: model.addressText) { _, _ in savedAttemptID = nil }
         .onChange(of: model.passwordText) { _, _ in savedAttemptID = nil }
+    }
+
+    /// A line of the system's own link look: where the privacy policy lives, one tap away.
+    /// Centred under the demo button, with a full-size tap target around the small text.
+    private var privacyPolicyLink: some View {
+        Link("Privacy Policy", destination: SupportPages.privacyPolicy)
+            .font(.footnote)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
+            .accessibilityIdentifier("connect.privacy")
     }
 
     private var appMark: some View {

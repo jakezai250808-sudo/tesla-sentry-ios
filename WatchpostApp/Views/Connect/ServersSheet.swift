@@ -187,6 +187,7 @@ struct ServersSheet: View {
                 currentSection
                 savedSection
                 actionsSection
+                privacySection
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Servers")
@@ -395,6 +396,14 @@ struct ServersSheet: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("servers.back")
             }
+        }
+    }
+
+    /// The policy in the same place on every screen: one tap, opened by the system browser.
+    private var privacySection: some View {
+        Section {
+            Link("Privacy Policy", destination: SupportPages.privacyPolicy)
+                .accessibilityIdentifier("servers.privacy")
         }
     }
 }

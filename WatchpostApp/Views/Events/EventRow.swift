@@ -69,10 +69,14 @@ struct EventRow: View {
                 .font(.headline)
                 .monospacedDigit()
                 .foregroundStyle(Color.labelPrimary)
+            // One line in the row, as drawn: a place that runs long steps down a little, then ends
+            // with an ellipsis. The whole place is still read by VoiceOver and shown on the playback page.
             Text(Display.place(city: event.meta.city, street: event.meta.street))
                 .font(.subheadline)
                 .foregroundStyle(Color.labelSecondary)
-                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 1 : 0.9)
+                .truncationMode(.tail)
                 .fixedSize(horizontal: false, vertical: true)
             Text(TriggerReasons.label(for: event.meta.reason).title)
                 .font(.footnote.weight(.medium))

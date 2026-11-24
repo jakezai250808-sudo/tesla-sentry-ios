@@ -158,13 +158,18 @@ enum Display {
         return formatter.string(from: Measurement(value: max(value, 0), unit: UnitDuration.seconds))
     }
 
-    /// A place as the event row shows it: "城市·街道", whichever is there, or the dash.
-    static func place(city: String?, street: String?) -> String {
+    /// A place as the event row shows it: "City · Street" where words are spaced, "城市·街道"
+    /// where they are not, whichever is there, or the dash.
+    static func place(city: String?, street: String?, bundle: Bundle = .main) -> String {
         switch (city, street) {
-        case let (city?, street?): "\(city)·\(street)"
-        case let (city?, nil): city
-        case let (nil, street?): street
-        case (nil, nil): missing
+        case let (city?, street?):
+            let format = String(localized: "%1$@ · %2$@",
+                                bundle: bundle,
+                                comment: "A city and a street shown together, e.g. Sample City · Sample Car Park A")
+            return String(format: format, city, street)
+        case let (city?, nil): return city
+        case let (nil, street?): return street
+        case (nil, nil): return missing
     }
     }
 
