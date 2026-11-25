@@ -148,8 +148,8 @@ struct DemoClipSourceTests {
         try FileManager.default.createDirectory(at: assets, withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: try #require(Self.bundled("demo-events", "json")),
                                          to: assets.appendingPathComponent("demo-events.json"))
-        let info = ["CFBundleIdentifier": "watchpost.tests.made", "CFBundleDevelopmentRegion": "en",
-                    "CFBundleLocalizations": ["en"]]
+        let info: [String: Any] = ["CFBundleIdentifier": "watchpost.tests.made", "CFBundleDevelopmentRegion": "en",
+                                    "CFBundleLocalizations": ["en"]]
         try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
             .write(to: folder.appendingPathComponent("Info.plist"))
         let source = DemoClipSource(now: Self.now, bundle: try #require(Bundle(url: folder)))
