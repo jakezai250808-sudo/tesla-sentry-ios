@@ -201,6 +201,8 @@ private extension Text {
 
 /// The solid Connect button. During a normal connect attempt the same control
 /// cancels it, so it remains enabled even though another submit is not allowed.
+/// Where it cannot cancel, as when reconnecting, it is disabled while busy: grey
+/// on grey, so the spinner takes the grey of the label, in both appearances.
 struct ConnectActionButton: View {
     let connecting: Bool
     let enabled: Bool
@@ -214,7 +216,7 @@ struct ConnectActionButton: View {
                 if connecting {
                     ProgressView()
                         .controlSize(.small)
-                        .tint(.white)
+                        .tint(connecting && !cancelsWhileConnecting ? Color.labelSecondary : .white)
                         .accessibilityHidden(true)
                     Text("Connecting…", comment: "Label while a connection attempt is running")
                 } else {
