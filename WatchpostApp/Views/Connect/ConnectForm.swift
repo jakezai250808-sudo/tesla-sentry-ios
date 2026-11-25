@@ -276,6 +276,17 @@ struct ConnectFailureView: View {
                 }
                 .buttonStyle(PlainActionButtonStyle())
 
+            case .lockedOut(let notice):
+                line
+                // What the server said, as it said it: the wait it names is its own, and the app
+                // works none out. Nothing is shown when it wrote no sentence.
+                if let sentence = notice.message {
+                    Text(sentence)
+                        .font(.footnote)
+                        .foregroundStyle(Color.labelSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
             default:
                 line
             }

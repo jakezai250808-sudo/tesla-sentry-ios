@@ -94,8 +94,11 @@ struct ServerSessionTests {
         for (reply, kind) in cases {
             let answer = try await Fixtures.session(StubTransport([reply])).postLogin(password: "x")
             switch (kind, answer) {
-            case ("rejected", .rejected), ("lockedOut", .lockedOut):
+            case ("rejected", .rejected):
                 break
+            case ("lockedOut", .lockedOut(let notice)):
+                // The sentence as the server wrote it, and the wait it names.
+                #expect(notice == LockoutNotice(message: "尝试次数过多，请 5 分钟后再试", minutes: 5))
             case ("failed302", .failed(let status, let message)):
                 #expect(status == 302)
                 #expect(message == nil)
@@ -139,6 +142,29 @@ struct ServerSessionTests {
         for session in [locked, failed, noCookie, offline, odd] {
             #expect(session.token == Fixtures.token, "A login that did not work leaves the cookie alone")
         }
+        // The lock is remembered with what the server said; the others are not a lock.
+        #expect(locked.lockoutNotice == LockoutNotice(message: "尝试次数过多，请 5 分钟后再试", minutes: 5))
+        #expect(failed.lockoutNotice == nil)
+    }
+
+    /// What the server wrote when it stopped taking tries, read off the page it answers `/login` with
+    /// and off a plain sentence alike, with the wait when it is written in minutes.
+    @Test(arguments: [
+        (#"<html><body><div class="err">尝试次数过多，请 5 分钟后再试</div></body></html>"#, "尝试次数过多，请 5 分钟后再试", 5),
+        ("尝试次数过多，请 5 分钟后再试", "尝试次数过多，请 5 分钟后再试", 5),
+        (#"<div class="err">Too many attempts. Try again in 10 minutes.</div>"#, "Too many attempts. Try again in 10 minutes.", 10),
+        (#"<div class="err">Locked for 5分钟, then retry.</div>"#, "Locked for 5分钟, then retry.", 5),
+        (#"<div class="err">Please try again after 2 min.</div>"#, "Please try again in 2 min.", 2),
+        (#"<div class="err">Locked &quot;for now&quot; &#8212; 1440 minutes</div>"#, "Locked \"for now\" — 1440 minutes", 1440),
+        (#"<div class="err">Please  try again in 30 seconds.</div>"#, "Please try again in 30 seconds.", nil),
+        (#"<div class="err">Try again in 2000 minutes.</div>"#, "Try again in 2000 minutes.", nil),
+        (#"<div class="err">Too many tries.</div>"#, "Too many tries.", nil),
+        (#"<html><body><h1>Login</h1></body></html>"#, nil, nil),
+        (#"<div class="err">   </div>"#, nil, nil),
+        ("", nil, nil),
+    ] as [(String, String?, Int?)])
+    func theSentenceAndTheWaitAreReadOffWhatTheServerAnswered(_ body: String, _ message: String?, _ minutes: Int?) {
+        #expect(ServerSession.lockoutNotice(in: Data(body.utf8)) == LockoutNotice(message: message, minutes: minutes))
     }
 
     @Test func theSavedPasswordIsNotTriedTwice() async throws {
@@ -215,6 +241,92 @@ struct ServerSessionTests {
         let session = Fixtures.session(transport, password: "secret")
         await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/events")) }
         #expect(session.token == nil)
+        #expect(session.lockoutNotice == LockoutNotice(message: "尝试次数过多，请 5 分钟后再试", minutes: 5))
+    }
+
+    /// Once the server stopped taking tries, nothing asks it for a sign-in until the person does: a
+    /// request that needs one is answered as locked without being sent, lock or no cookie. The
+    /// person's try (a pull, Retry) is one sign-in more, which can lock it again.
+    @Test func aLockedServerIsNotAskedAgainUntilThePersonAsks() async throws {
+        let transport = StubTransport([
+            .unauthorized(), .status(429, ServerFixtures.lockedOutMessage),
+            // The person's try: the cookie is refused once more, and the password is not taken.
+            .unauthorized(), .status(429, ServerFixtures.lockedOutMessage),
+            // And again: refused, then taken.
+            .unauthorized(), .loginOK(token: Self.newToken), .ok("{}"),
+        ])
+        let session = Fixtures.session(transport, password: "secret")
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/events")) }
+        #expect(transport.sent.map(\.path) == ["/api/events", "/login"])
+
+        // The script has no answer for a request here: were one sent, it would not come back as a lock.
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/live")) }
+        await #expect(throws: UpstreamError.lockedOut) { try await session.download(session.request("/api/timeline"), to: FileManager.default.temporaryDirectory) { _, _ in } }
+        #expect(transport.sent.count == 2)
+
+        session.liftLockout()
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/live")) }
+        #expect(transport.sent.map(\.path) == ["/api/events", "/login", "/api/live", "/login"])
+        #expect(session.lockoutNotice?.message == ServerFixtures.lockedOutMessage)
+
+        session.liftLockout()
+        let response = try await session.data(for: session.request("/api/ver"))
+        #expect(response.status == 200)
+        #expect(transport.sent.map(\.path) == ["/api/events", "/login", "/api/live", "/login", "/api/ver", "/login", "/api/ver"])
+        #expect(session.token?.value == Self.newToken)
+        #expect(session.lockoutNotice == nil, "A sign-in that worked ends the lock")
+    }
+
+    /// A lock that came from the person's own try (the sign-in-again page) keeps the cookie: the
+    /// server refused the password, not the cookie. A request goes out with that cookie, and when it
+    /// is refused the answer is the lock, with no sign-in behind the person's back.
+    @Test func aLockFromTheSignInAgainPageKeepsTheCookieAndStopsTheAutomaticSignIn() async throws {
+        let transport = StubTransport([.status(429, ServerFixtures.lockedOutMessage), .unauthorized()])
+        let session = Fixtures.session(transport, password: "secret")
+        await #expect(throws: UpstreamError.lockedOut) { try await session.login(password: "typo") }
+        #expect(session.token == Fixtures.token)
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/events")) }
+        #expect(transport.sent.map(\.path) == ["/login", "/api/events"])
+        #expect(session.token == Fixtures.token)
+        #expect(transport.sent(to: "/api/events").first?.header("Cookie") == Self.oldCookie)
+    }
+
+    /// The wait is the server's, by the phone's clock: one minute short of it nothing is asked, and
+    /// once it has passed a request may sign in again.
+    @Test func theWaitIsTheOneTheServerNamed() async throws {
+        let clock = Box(Date(timeIntervalSince1970: 1_761_500_000))
+        let transport = StubTransport([
+            .unauthorized(), .status(429, ServerFixtures.lockedOutMessage),
+            .unauthorized(), .loginOK(token: Self.newToken), .ok("{}"),
+        ])
+        let session = ServerSession(id: UUID(), base: Fixtures.base, password: "secret", token: Fixtures.token, transport: transport,
+                                    now: { clock.get() })
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/events")) }
+        clock.set(clock.get().addingTimeInterval(4 * 60))
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/events")) }
+        #expect(transport.sent.map(\.path) == ["/api/events", "/login"])
+        #expect(session.lockoutNotice == LockoutNotice(message: ServerFixtures.lockedOutMessage, minutes: 5),
+                "After the wait the sentence is still there for a list that failed for it")
+        clock.set(clock.get().addingTimeInterval(60))
+        let response = try await session.data(for: session.request("/api/events"))
+        #expect(response.status == 200)
+        #expect(transport.sent.map(\.path) == ["/api/events", "/login", "/api/events", "/login", "/api/events"])
+        #expect(session.lockoutNotice == nil)
+    }
+
+    /// A server that names no wait is read as locked until the person asks.
+    @Test func aLockWithNoWaitLastsUntilThePersonAsks() async throws {
+        let clock = Box(Date(timeIntervalSince1970: 1_761_500_000))
+        let transport = StubTransport([.unauthorized(), .status(429, "Too many tries."), .unauthorized(), .loginOK(token: Self.newToken), .ok("{}")])
+        let session = ServerSession(id: UUID(), base: Fixtures.base, password: "secret", token: Fixtures.token, transport: transport,
+                                    now: { clock.get() })
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/events")) }
+        #expect(session.lockoutNotice == LockoutNotice(message: "Too many tries.", minutes: nil))
+        clock.set(clock.get().addingTimeInterval(3 * 24 * 3_600))
+        await #expect(throws: UpstreamError.lockedOut) { try await session.data(for: session.request("/api/events")) }
+        #expect(transport.sent.map(\.path) == ["/api/events", "/login"])
+        session.liftLockout()
+        #expect(try await session.data(for: session.request("/api/events")).status == 200)
     }
 
     @Test func anythingElseIsReturnedAsItCame() async throws {

@@ -61,8 +61,8 @@ enum ServerConnection {
                 return Outcome(version: version, token: token, requiresPassword: true)
             case .rejected:
                 throw ConnectFailure.credentialsRejected
-            case .lockedOut:
-                throw ConnectFailure.lockedOut
+            case .lockedOut(let notice):
+                throw ConnectFailure.lockedOut(notice)
             case .failed(let status, _):
                 throw ConnectFailure.server(status: status)
             }

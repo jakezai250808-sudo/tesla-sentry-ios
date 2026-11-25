@@ -71,7 +71,11 @@ struct ServerConnectionTests {
 
     @Test(arguments: [
         LoginAnswerCase(reply: .status(401, "用户名或密码不对"), failure: .credentialsRejected, what: "wrong password"),
-        LoginAnswerCase(reply: .status(429, "尝试次数过多，请 5 分钟后再试"), failure: .lockedOut, what: "locked out"),
+        LoginAnswerCase(reply: .status(429, "尝试次数过多，请 5 分钟后再试"),
+                        failure: .lockedOut(LockoutNotice(message: "尝试次数过多，请 5 分钟后再试", minutes: 5)), what: "locked out"),
+        LoginAnswerCase(reply: .status(429, #"<html><div class="err">Too many attempts. Try again in 10 minutes.</div></html>"#),
+                        failure: .lockedOut(LockoutNotice(message: "Too many attempts. Try again in 10 minutes.", minutes: 10)),
+                        what: "locked out, the page's sentence"),
         LoginAnswerCase(reply: .status(500, "服务端错误"), failure: .server(status: 500), what: "server error"),
         LoginAnswerCase(reply: .status(302, headers: ["Location": "/"]), failure: .server(status: 302), what: "302 without a cookie"),
     ])

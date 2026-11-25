@@ -66,9 +66,10 @@ final class AppModel {
     private(set) var events: [RecordedEvent] = []
     private(set) var loadState: LoadState = .idle
     /// Why the last refresh did not work: for the one case the person can fix
-    /// outside the app (local network permission), and for the events screen to
+    /// outside the app (local network permission), for the events screen to
     /// tell an empty list that is missing because the server refused the session
-    /// from any other; nil once a refresh works.
+    /// from any other, and for it to say when the server stopped taking tries at
+    /// the password (`listLockout`); nil once a refresh works.
     private(set) var lastFailure: UpstreamError?
     /// When the list on screen was last fetched; the list may be older than the phone's clock.
     private(set) var lastRefresh: Date?
@@ -107,12 +108,13 @@ final class AppModel {
     }
 
     /// Known from the last request: true when it answered, false when it did
-    /// not, nil while nothing was asked yet or a request is on its way.
+    /// not, nil while nothing was asked yet or a request is on its way. A server that stopped
+    /// taking tries at the password answered, so it is online.
     var serverIsOnline: Bool? {
         switch loadState {
         case .idle, .loading: nil
         case .loaded: true
-        case .failed: sessionExpired ? nil : false
+        case .failed: sessionExpired ? nil : lastFailure == .lockedOut
         }
     }
 
@@ -320,6 +322,16 @@ final class AppModel {
     /// when the sign-in-again sheet is cancelled while the refusal is still the reason.
     var listNeedsSignIn: Bool { loadState == .failed && lastFailure == .unauthorized }
 
+    /// The server's sentence from the sign-in the list is waiting on, when the list failed because
+    /// the server stopped taking tries at the password: for the events screen to say under its own
+    /// line, as it was said and in no other words. Nil for every other failure, and with no session
+    /// to read it from; the sentence is not kept across launches.
+    var listLockout: LockoutNotice? {
+        guard !isDemo, lastFailure == .lockedOut, case .server(let id) = mode,
+              let session = serverSessions[id] else { return nil }
+        return session.lockoutNotice ?? LockoutNotice(message: nil, minutes: nil)
+    }
+
     /// Whether the phone may not have got through to a server on its own network, which is often the
     /// local-network permission: then the events screen says so, hedged as the connect page does, and
     /// offers the way to Settings, under an empty list and under the banner over one still on screen.
@@ -340,8 +352,14 @@ final class AppModel {
 
     /// Fetches everything the events screen shows. Answers from an older
     /// request, or from a server that is no longer current, are dropped.
-    func refresh() async {
+    ///
+    /// `askedByPerson` is a pull on the list or its Retry button. When the server stopped taking
+    /// tries at the password (429), only that asks for the sign-in the list needs: without it nothing
+    /// signs in, and the list is answered as locked until the wait the server named has passed, so
+    /// that nothing in the app keeps the server locked by trying again on its own.
+    func refresh(askedByPerson: Bool = false) async {
         guard let source else { return }
+        if askedByPerson, case .server(let id) = mode { serverSessions[id]?.liftLockout() }
         loadGeneration += 1
         let generation = loadGeneration
         let stateBefore = loadState
@@ -399,8 +417,9 @@ final class AppModel {
 
     /// Signs in again on the current server with the password typed in the sheet. Returns nil once it
     /// worked and the list has been asked for again, loaded or not; otherwise why it did not work:
-    /// `.credentialsRejected` when the server refused the password, `.lockedOut` when it stopped
-    /// taking tries, and `.localNetworkUnreachable` when the request did not get through to a server
+    /// `.credentialsRejected` when the server refused the password, `.lockedOut` (with what the
+    /// server said) when it stopped taking tries, and `.localNetworkUnreachable` when the request
+    /// did not get through to a server
     /// on its own network (often the local-network permission), which has the sheet offer the way to
     /// Settings. Anything else is `.unreachable`, as it is with no current server, when nothing was
     /// asked at all.
@@ -417,7 +436,8 @@ final class AppModel {
             guard let failure = error as? UpstreamError else { return .unreachable }
             switch failure {
             case .unauthorized: return .credentialsRejected
-            case .lockedOut: return .lockedOut
+            case .lockedOut:
+                return .lockedOut(session.lockoutNotice ?? LockoutNotice(message: nil, minutes: nil))
             default:
                 if TransportFailure.localNetworkUnreachable(failure, base: session.base) {
                     return .localNetworkUnreachable

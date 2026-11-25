@@ -157,7 +157,7 @@ struct AppModelTests {
 
     @Test(arguments: [
         (StubTransport.Reply.status(401), ConnectState.failed(.credentialsRejected)),
-        (.status(429, "try later"), .failed(.lockedOut)),
+        (.status(429, "try later"), .failed(.lockedOut(LockoutNotice(message: "try later", minutes: nil)))),
         (.status(500, "down"), .failed(.server(status: 500))),
     ] as [(StubTransport.Reply, ConnectState)])
     func aLoginThatDoesNotWorkIsShownAndNothingIsSaved(_ login: StubTransport.Reply, _ expected: ConnectState) async {
@@ -372,6 +372,87 @@ struct AppModelTests {
         #expect(model.lastFailure == nil)
         #expect(model.events == Fixtures.events)
         #expect(transport.sent(to: "/api/events").count == 2)
+    }
+
+    /// The server stops taking tries at the saved password when the list needs a new cookie. The list
+    /// keeps what it has and says that sign-in is locked, with the server's sentence; no page asks for
+    /// the password, and nothing asks the server again until the person does. That one try can lock it
+    /// again; once the server takes the password, the list loads and nothing says locked.
+    @Test func aLockedSignInKeepsTheListAndWaitsForThePerson() async {
+        defer { registry.cleanUp() }
+        let transport = gatedServer()
+        let (model, _) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        model.passwordText = "s3cret"
+        await connect(model)
+        let events = model.events
+        #expect(!events.isEmpty)
+        #expect(model.listLockout == nil)
+        // From here on the cookie is refused, and the saved password is not taken.
+        transport.route("/api/events", endless: .unauthorized())
+        transport.route("/api/live", endless: .unauthorized())
+        transport.route("/login", endless: .status(429, ServerFixtures.lockedOutMessage))
+        let logins = transport.sent(to: "/login").count
+        let asks = transport.sent(to: "/api/events").count
+        await model.refresh()
+        #expect(model.loadState == .failed)
+        #expect(model.lastFailure == .lockedOut)
+        #expect(model.events == events, "What is on screen stays")
+        #expect(!model.sessionExpired, "No page asks for the password: the server stopped taking tries")
+        #expect(!model.listNeedsSignIn)
+        #expect(model.listLockout == LockoutNotice(message: ServerFixtures.lockedOutMessage, minutes: 5))
+        #expect(model.serverIsOnline == true, "The server answered")
+        #expect(transport.sent(to: "/login").count == logins + 1)
+        #expect(transport.sent(to: "/api/events").count == asks + 1)
+        // Nothing asks again on its own: not the screen coming back, not a refresh nobody pulled for.
+        await model.refreshIfNeeded()
+        await model.refresh()
+        #expect(transport.sent(to: "/login").count == logins + 1)
+        #expect(transport.sent(to: "/api/events").count == asks + 1)
+        #expect(model.listLockout?.message == ServerFixtures.lockedOutMessage)
+        #expect(model.lastFailure == .lockedOut)
+        // The person asks (a pull, Retry): one try more, and the server locks it again.
+        await model.refresh(askedByPerson: true)
+        #expect(model.lastFailure == .lockedOut)
+        #expect(model.events == events)
+        #expect(transport.sent(to: "/login").count == logins + 2)
+        #expect(transport.sent(to: "/api/events").count == asks + 2)
+        // The server takes the password again: the list loads and nothing says locked.
+        transport.route("/login", endless: .loginOK(token: Self.newToken))
+        transport.route("/api/events", endless: .ok(Fixtures.eventsJSON))
+        transport.route("/api/live", endless: .ok(ServerFixtures.live))
+        await model.refresh(askedByPerson: true)
+        #expect(model.loadState.isLoaded)
+        #expect(model.lastFailure == nil)
+        #expect(model.listLockout == nil)
+        #expect(transport.sent(to: "/login").count == logins + 3)
+    }
+
+    /// Coming up on a server that refuses the saved cookie and then stops taking the saved password:
+    /// there is no list, and the empty list says sign-in is locked, with the server's sentence, and
+    /// asks nobody for a password. One sign-in was tried.
+    @Test func aLockOnLaunchLeavesAnEmptyListThatSaysSo() async {
+        defer { registry.cleanUp() }
+        let transport = RoutingTransport()
+        transport.route("/api/events", endless: .unauthorized())
+        transport.route("/api/live", endless: .unauthorized())
+        transport.route("/login", endless: .status(429, ServerFixtures.lockedOutMessage))
+        let store = makeStore()
+        let saved = record()
+        store.save(saved)
+        store.setPassword("old-password", for: saved.id)
+        store.setToken(Fixtures.token, for: saved.id)
+        store.lastServerID = saved.id
+        let model = AppModel(store: store, transport: transport)
+        model.restore()
+        #expect(await settle { model.loadState == .failed })
+        #expect(model.events.isEmpty)
+        #expect(model.lastFailure == .lockedOut)
+        #expect(!model.sessionExpired)
+        #expect(!model.listNeedsSignIn)
+        #expect(model.listLockout == LockoutNotice(message: ServerFixtures.lockedOutMessage, minutes: 5))
+        #expect(model.serverIsOnline == true)
+        #expect(transport.sent(to: "/login").count == 1)
     }
 
     @Test func aStatusThatDoesNotAnswerIsOnlyTheStatus() async {
@@ -619,11 +700,11 @@ struct AppModelTests {
         (ConnectFailure.credentialsRejected, true, "Couldn't connect. Check the password and try again." as String?),
         (.unreachable, true, "Couldn't connect. Try again."),
         (.server(status: 503), true, "Couldn't connect. Check the password and try again."),
-        (.lockedOut, true, "Too many tries. Try again later."),
+        (.lockedOut(LockoutNotice(message: nil, minutes: nil)), true, "Too many tries. Try again later."),
         (.credentialsRejected, false, "Couldn't connect. Check the address and password."),
         (.unreachable, false, "Couldn't connect. Check the address and password."),
         (.server(status: 503), false, "Couldn't connect. Check the address and password."),
-        (.lockedOut, false, "Too many tries. Try again later."),
+        (.lockedOut(LockoutNotice(message: "try later", minutes: nil)), false, "Too many tries. Try again later."),
         (.incompatibleServer, true, "This server is not compatible yet."),
         (.incompatibleServer, false, "This server is not compatible yet."),
         (.certificateRejected, true, "The server's certificate is not trusted. Check the address or the certificate."),
@@ -644,7 +725,9 @@ struct AppModelTests {
     /// a request that did not get through at all, by where the server is.
     @Test(arguments: [
         (StubTransport.Reply.status(401), "192.168.1.50:8080", ConnectFailure.credentialsRejected),
-        (.status(429, "try later"), "192.168.1.50:8080", .lockedOut),
+        (.status(429, "try later"), "192.168.1.50:8080", .lockedOut(LockoutNotice(message: "try later", minutes: nil))),
+        (.status(429, ServerFixtures.lockedOutMessage), "192.168.1.50:8080",
+         .lockedOut(LockoutNotice(message: ServerFixtures.lockedOutMessage, minutes: 5))),
         (.raises(URLError(.cannotConnectToHost)), "192.168.1.50:8080", .localNetworkUnreachable),
         (.raises(URLError(.cannotConnectToHost)), "cam.example.com", .unreachable),
     ] as [(StubTransport.Reply, String, ConnectFailure)])

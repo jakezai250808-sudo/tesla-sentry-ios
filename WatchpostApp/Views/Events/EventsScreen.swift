@@ -34,7 +34,7 @@ struct EventsScreen: View {
                 .frame(maxWidth: Metrics.side * 2 + 600)
                 .frame(maxWidth: .infinity)
             }
-            .refreshable { await model.refresh() }
+            .refreshable { await model.refresh(askedByPerson: true) }
             .safeAreaInset(edge: .bottom) {
                 if model.isDemo {
                     demoNote
@@ -155,26 +155,50 @@ struct EventsScreen: View {
         .accessibilityIdentifier("events.presence")
     }
 
-    /// Over a list that is still on screen after a refresh that did not work. Its two lines are one
-    /// element for VoiceOver. When the phone may not have got through to a server on its own network,
-    /// the connect page's line and the way to Settings follow underneath, outside that element: a
-    /// button inside a combined one cannot be activated on its own.
+    /// Over a list that is still on screen after a refresh that did not work. Its lines are one
+    /// element for VoiceOver. When the server stopped taking tries at the password, the line says
+    /// that and the server's own sentence follows it, and Retry asks for the sign-in the list needs:
+    /// a pull does the same, but the line no longer tells of it. When the phone may not have got
+    /// through to a server on its own network, the connect page's line and the way to Settings follow
+    /// underneath, outside that element: a button inside a combined one cannot be activated on its
+    /// own.
     private var refreshBanner: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        let lockout = model.listLockout
+        return VStack(alignment: .leading, spacing: 4) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
-                    Image(systemName: "wifi.exclamationmark")
+                    Image(systemName: lockout == nil ? "wifi.exclamationmark" : "lock")
                         .accessibilityHidden(true)
-                    Text("Sync failed. Pull to retry")
+                    if lockout == nil {
+                        Text("Sync failed. Pull to retry")
+                    } else {
+                        Text("Sign-in is temporarily locked.")
+                    }
                 }
                 .font(.subheadline)
                 .foregroundStyle(Color.warning)
+                // What the server said, as it said it: the wait it names is its own.
+                if let sentence = lockout?.message {
+                    Text(sentence)
+                        .font(.footnote)
+                        .foregroundStyle(Color.labelPrimary)
+                }
                 (Text("Last refreshed") + Text(" \(refreshTime)"))
                     .font(.footnote)
                     .foregroundStyle(Color.labelSecondary)
             }
             .accessibilityElement(children: .combine)
 
+            if lockout != nil {
+                Button {
+                    Task { await model.refresh(askedByPerson: true) }
+                } label: {
+                    Text("Retry")
+                }
+                .buttonStyle(PlainActionButtonStyle())
+                .padding(.top, 4)
+                .accessibilityIdentifier("events.banner.retry")
+            }
             if model.listMayNeedLocalNetworkPermission {
                 // The 4 above is for two tight lines; the help reads as its own block 8 under, as on
                 // the connect page.
@@ -321,8 +345,9 @@ struct EventsScreen: View {
     }
 
     private var loadFailure: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "wifi.exclamationmark")
+        let lockout = model.listLockout
+        return VStack(spacing: 12) {
+            Image(systemName: lockout == nil ? "wifi.exclamationmark" : "lock")
                 .font(.system(size: 32))
                 .foregroundStyle(Color.labelSecondary)
                 .accessibilityHidden(true)
@@ -330,8 +355,15 @@ struct EventsScreen: View {
                 .font(.subheadline)
                 .foregroundStyle(Color.labelPrimary)
                 .multilineTextAlignment(.center)
+            // What the server said, as it said it: the wait it names is its own.
+            if let sentence = lockout?.message {
+                Text(sentence)
+                    .font(.footnote)
+                    .foregroundStyle(Color.labelSecondary)
+                    .multilineTextAlignment(.center)
+            }
             Button {
-                Task { await model.refresh() }
+                Task { await model.refresh(askedByPerson: true) }
             } label: {
                 Text("Retry")
             }
@@ -367,7 +399,9 @@ struct EventsScreen: View {
     }
 
     private var loadFailureMessage: Text {
-        if model.listNeedsSignIn {
+        if model.listLockout != nil {
+            Text("Sign-in is temporarily locked.")
+        } else if model.listNeedsSignIn {
             Text("Sign in to this server again to view events.")
         } else {
             Text("Couldn't load events.")

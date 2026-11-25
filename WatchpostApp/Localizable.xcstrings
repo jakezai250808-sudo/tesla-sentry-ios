@@ -1674,6 +1674,17 @@
         }
       }
     },
+    "Sign-in is temporarily locked." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录暂时被锁定。"
+          }
+        }
+      }
+    },
     "Six camera views · %lld seconds" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -164,6 +164,17 @@ enum ServerAddressProblem: Error, Hashable, Sendable {
     case notAnAddress
 }
 
+/// What the server said when it stopped taking tries at the password for a while (429 on `/login`):
+/// eight wrong ones in ten minutes, on its own count. It is shown as it was said: the app does not
+/// work out a wait of its own, and the lock can last longer than the sentence says.
+struct LockoutNotice: Hashable, Sendable {
+    /// Its sentence from the login page, without the page around it. Nil when it wrote none.
+    var message: String?
+    /// The wait its sentence names: a number written with "分" (分钟) or "min"/"minute(s)", in
+    /// minutes. Nil when there is none, and then the app waits for the person, not for a time.
+    var minutes: Int?
+}
+
 /// Why connecting failed, in the terms the connect screen shows.
 enum ConnectFailure: Error, Hashable, Sendable {
     case invalidAddress(ServerAddressProblem)
@@ -173,7 +184,8 @@ enum ConnectFailure: Error, Hashable, Sendable {
     case unreachable
     case certificateRejected
     case credentialsRejected
-    case lockedOut
+    /// Too many wrong tries: the server is not taking another for a while, and said how long.
+    case lockedOut(LockoutNotice)
     case incompatibleServer
     case server(status: Int)
     case cancelled

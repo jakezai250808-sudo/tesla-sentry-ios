@@ -11,8 +11,9 @@ enum LoginAnswer {
     case token(SessionToken)
     /// 401: the password is wrong.
     case rejected
-    /// 429: too many wrong attempts; the server locks this address for the rest of a ten-minute window.
-    case lockedOut
+    /// 429: too many wrong attempts; the server locks this address for a while, and says how long
+    /// on the page it answers with.
+    case lockedOut(LockoutNotice)
     case failed(status: Int, message: String?)
 }
 
@@ -30,15 +31,23 @@ final class ServerSession: Sendable {
         /// The saved password was refused. It is not tried again on this session: eight wrong
         /// attempts in ten minutes lock the server for the whole phone.
         var passwordRejected = false
+        /// The server stopped taking tries (429). Until `until`, or for good when the server named
+        /// no wait, a refused cookie is reported as `.lockedOut` and no `POST /login` is made unless
+        /// the person asks for that try (`liftLockout()`): a saved password that no longer works
+        /// must not keep the server locked for the whole phone.
+        var lockout: (notice: LockoutNotice, until: Date?)?
     }
     private let state: OSAllocatedUnfairLock<State>
     private let logins = LoginGate()
+    private let now: @Sendable () -> Date
 
-    init(id: UUID, base: URL, password: String?, token: SessionToken?, transport: any HTTPTransport) {
+    init(id: UUID, base: URL, password: String?, token: SessionToken?, transport: any HTTPTransport,
+         now: @escaping @Sendable () -> Date = Date.init) {
         self.id = id
         self.base = base
         self.password = password
         self.transport = transport
+        self.now = now
         state = OSAllocatedUnfairLock(initialState: State(token: token))
     }
 
@@ -53,7 +62,29 @@ final class ServerSession: Sendable {
             current.token = token
             current.revision += 1
             current.passwordRejected = false
+            current.lockout = nil
         }
+    }
+
+    /// What the server said when it last stopped taking tries. It stays until a sign-in works
+    /// (`updateToken`) or the person asks for another try (`liftLockout()`), so that a list that
+    /// failed for it can keep saying the sentence after the wait it named has passed.
+    var lockoutNotice: LockoutNotice? {
+        state.withLock { $0.lockout?.notice }
+    }
+
+    /// The person asked for a try (a pull or Retry on the list): the sign-in the list needs is made,
+    /// lock or no lock. Another 429 locks it again.
+    func liftLockout() {
+        state.withLock { $0.lockout = nil }
+    }
+
+    /// The lock as it stands for a request: nil once the wait it named has passed. A server that named
+    /// no wait is read as locked until the person asks.
+    private func activeLockout(_ current: State) -> (notice: LockoutNotice, until: Date?)? {
+        guard let lockout = current.lockout else { return nil }
+        if let until = lockout.until, until <= now() { return nil }
+        return lockout
     }
 
     // MARK: Requests
@@ -118,7 +149,8 @@ final class ServerSession: Sendable {
     }
 
     /// `POST /login` with user "admin". 302 + Set-Cookie → token (stored, returned). 401 →
-    /// `.unauthorized`, 429 → `.lockedOut`.
+    /// `.unauthorized`, 429 → `.lockedOut`. It is the person's own try (connect, the sign-in-again
+    /// page), so it is sent lock or no lock.
     func login(password: String) async throws -> SessionToken {
         try await logIn(with: password)
     }
@@ -140,10 +172,72 @@ final class ServerSession: Sendable {
         case 401:
             return .rejected
         case 429:
-            return .lockedOut
+            let notice = Self.lockoutNotice(in: response.body)
+            let until = notice.minutes.map { now().addingTimeInterval(Double($0) * 60) }
+            state.withLock { $0.lockout = (notice, until) }
+            return .lockedOut(notice)
         default:
             return .failed(status: response.status, message: response.failureMessage)
         }
+    }
+
+    /// The server's sentence when it stops taking tries, and the wait it names. The server answers
+    /// `/login` with its login page, the sentence in the page's error line and nowhere else, and no
+    /// `Retry-After`. The line is taken as it is written, in the language the server answered in; a
+    /// body that is a short plain text is taken as that sentence; a body with neither says nothing.
+    static func lockoutNotice(in body: Data) -> LockoutNotice {
+        let text = String(decoding: body.prefix(65_536), as: UTF8.self)
+        let message: String?
+        if let line = try? Self.errorLine.firstMatch(in: text)?.output.1 {
+            message = plainText(line)
+        } else if !text.contains("<") {
+            message = plainText(Substring(text))
+        } else {
+            message = nil
+        }
+        return LockoutNotice(message: message, minutes: message.flatMap(namedMinutes(in:)))
+    }
+
+    /// The error line of the server's login page: `<div class="err">…</div>`. Made where it is
+    /// used: a pattern is not kept in a static, which Swift 6 would not have as shared state.
+    private static var errorLine: Regex<(Substring, Substring)> { #/<div class="err">([^<]*)<"/# }
+
+    /// A sentence with its markup and entities gone; nil when nothing is left. The patterns are
+    /// written with the long delimiters (`#/…/#`): a bare `/…/` after `(` reads as operators here.
+    private static func plainText(_ text: Substring) -> String? {
+        let unmarked = text.replacing(#/<[^>]*>/#, with: "")
+        let named = unmarked.replacing(#/&(amp|lt|gt|quot|apos|nbsp);/#) { match in
+            switch match.output.1 {
+            case "amp": "&"
+            case "lt": "<"
+            case "gt": ">"
+            case "quot": "\""
+            case "apos": "'"
+            default: "\u{00A0}"
+            }
+        }
+        let numbered = named.replacing(#/&#([0-9]+|[xX][0-9A-Fa-f]+);/#) { match in
+            let body = match.output.1
+            let hex = body.first == "x" || body.first == "X"
+            let value = UInt32(hex ? body.dropFirst() : body, radix: hex ? 16 : 10)
+            return value.flatMap(Unicode.Scalar.init).map(String.init) ?? ""
+        }
+        let sentence = numbered.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        return sentence.isEmpty ? nil : sentence
+    }
+
+    /// The wait the sentence names, as minutes: a number written with "分" (分钟) or "min"/"minute(s)".
+    /// Anything else reads as no wait at all, a number of seconds or one of more than a day among it,
+    /// and then the app waits for the person, not for a time.
+    private static func namedMinutes(in sentence: String) -> Int? {
+        guard let digits = try? Self.minuteWait.firstMatch(in: sentence)?.output.1,
+              let minutes = Int(digits), (1...1_440).contains(minutes) else { return nil }
+        return minutes
+    }
+
+    /// "分" (U+5206) and "分钟" (U+5206 U+949F), written as code points: the sources hold no CJK.
+    private static var minuteWait: Regex<(Substring, Substring)> {
+        #/(?i)(\d+)\s*(?:\u{5206}\u{949F}|\u{5206}|mins?|minutes?)/#
     }
 
     // MARK: Internals
@@ -175,9 +269,15 @@ final class ServerSession: Sendable {
                                transmit: @escaping @Sendable (URLRequest) async throws -> HTTPResponse) async throws -> HTTPResponse {
         do {
             let revision = state.withLock { $0.revision }
+            // Locked out, with no cookie to send: every signed-in request would only be refused again.
+            if token == nil, state.withLock({ activeLockout($0) }) != nil { throw UpstreamError.lockedOut }
             let response = try await transmit(withCookie(original))
             guard response.status == 401 else { return response }
             guard hasPassword else { throw UpstreamError.unauthorized }
+
+            // The server is not taking tries for a while, on its own word: that is what this is, and
+            // `/login` is not sent. The person's own ask lifts the lock first (`liftLockout()`).
+            if state.withLock({ activeLockout($0) }) != nil { throw UpstreamError.lockedOut }
 
             if state.withLock({ $0.revision }) == revision {
                 if state.withLock({ $0.passwordRejected }) { throw UpstreamError.unauthorized }
@@ -190,6 +290,9 @@ final class ServerSession: Sendable {
                 }
             }
             // (Else: a login that finished while this request was in flight already replaced the cookie.)
+            // Unless it did not: one that found the server locked changed the revision too, and left
+            // no cookie to retry with. The lock is what answers here as well.
+            if state.withLock({ activeLockout($0) }) != nil { throw UpstreamError.lockedOut }
 
             let retry = try await transmit(withCookie(original))
             guard retry.status != 401 else { throw UpstreamError.unauthorized }
