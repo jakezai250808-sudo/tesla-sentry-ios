@@ -34,6 +34,8 @@ extension Color {
     static let action = Color(light: 0x005FCC, dark: 0x64AAFF)
     /// The solid main button; its label is white.
     static let primaryFill = Color(light: 0x005FCC, dark: 0x0A65D9)
+    /// The main button while it cannot run: neutral, not blue. 4.8:1 and 6.3:1 with the grey label.
+    static let fillDisabled = Color(light: 0xE5E5EA, dark: 0x2C2C2E)
     /// A filter chip or camera chip that is on.
     static let selectionFill = Color(light: 0xE8F1FF, dark: 0x152C49)
     /// A known-good state, always with words.
@@ -66,18 +68,20 @@ enum Metrics {
 
 // MARK: Buttons
 
-/// The solid main button. Disabled dims the label; the fill stays as it is.
+/// The solid main button. Ready, it is blue with white words. Not ready, it turns neutral instead of
+/// only dimming: a grey fill with grey words at full strength, so an action that cannot run yet
+/// (nothing chosen, a form not filled in) never looks available.
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.body.weight(.semibold))
-            .foregroundStyle(.white)
-            .opacity(isEnabled ? 1 : 0.45)
+            .foregroundStyle(isEnabled ? Color.white : Color.labelSecondary)
             .frame(maxWidth: .infinity)
             .frame(minHeight: Metrics.primaryHeight)
-            .background(Color.primaryFill, in: RoundedRectangle(cornerRadius: Metrics.primaryCorner, style: .continuous))
+            .background(isEnabled ? Color.primaryFill : Color.fillDisabled,
+                        in: RoundedRectangle(cornerRadius: Metrics.primaryCorner, style: .continuous))
             .scaleEffect(configuration.isPressed && isEnabled ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }

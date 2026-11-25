@@ -11,7 +11,7 @@ struct ThankYouTicket: View {
                 row(String(localized: "Tip amount", comment: "Thank-you ticket: label above the amount"),
                     value: ticket.displayPrice, isEmphasized: true)
                     .accessibilityIdentifier("thanks.amount")
-                row(String(localized: "Tip date", comment: "Thank-you ticket: label above the date"),
+                row(String(localized: "Tip time", comment: "Thank-you ticket: label above the date and time"),
                     value: ticket.purchasedAt.formatted(date: .abbreviated, time: .shortened))
                 row(String(localized: "App Store transaction number", comment: "Thank-you ticket: label above the App Store's number for the purchase"),
                     value: String(ticket.transactionID), keepsToOneLine: true)
@@ -47,15 +47,15 @@ struct ThankYouContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.groupSpacing) {
-            Text("Your support keeps Watchpost going.", comment: "Line under the thank-you title after a tip")
+            Text("Your support helps us improve Watchpost.", comment: "Line under the thank-you title after a tip")
                 .font(.body)
                 .foregroundStyle(Color.labelSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             ThankYouTicket(ticket: ticket)
 
-            Text("This ticket is Watchpost's own record. The App Store keeps the receipt in your purchase history.",
-                 comment: "Explanation under the thank-you ticket: the app made this record, Apple keeps the receipt")
+            Text("This is a thank-you from Watchpost. For your purchase record, check your App Store purchase history.",
+                 comment: "Explanation under the thank-you ticket: the app made this record, Apple has the purchase record")
                 .font(.footnote)
                 .foregroundStyle(Color.labelSecondary)
                 .fixedSize(horizontal: false, vertical: true)

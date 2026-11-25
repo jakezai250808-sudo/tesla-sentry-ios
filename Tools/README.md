@@ -19,7 +19,8 @@ from them and must never be edited by hand:
 
 - `python3 Tools/Strings/merge.py` writes `WatchpostApp/Localizable.xcstrings` and
   `WatchpostApp/InfoPlist.xcstrings`, then audits.
-- `python3 Tools/Strings/merge.py --check` audits only (exit 1 on a missing key).
+- `python3 Tools/Strings/merge.py --check` audits only (exit 1 on a missing key, or on a catalog on
+  disk that is not what the tables give: run it before committing strings).
 - `python3 Tools/Strings/merge.py --list` prints every key the Swift sources use with its Chinese.
 
 Audit rules: every user-facing literal in `WatchpostApp/**/*.swift` has a zh-Hans value; a key is

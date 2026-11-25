@@ -58,6 +58,16 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
+## Tips
+
+Tips are voluntary in-app purchases that unlock nothing. To try them without paying, select
+`WatchpostAppTests/Tips.storekit` as the scheme's StoreKit Configuration (Product ▸ Scheme ▸ Edit
+Scheme…, Run ▸ Options) and run: purchases then go through StoreKit Testing, and nothing is charged.
+A tip bought that way is reported like any other, with StoreKit Testing's receipt. How the tip store
+behaves is covered by the unit tests, which run it against that same file
+(`WatchpostAppTests/StoreKitTipStoreTests.swift`): a tip bought on another device, a refund, Ask to
+Buy, and a purchase the App Store could not verify. Nothing a test buys is reported.
+
 ## Privacy
 
 - No account and no cloud service of its own. Besides the address you type, the app talks only to

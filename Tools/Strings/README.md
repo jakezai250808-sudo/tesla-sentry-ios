@@ -13,4 +13,6 @@ Rules:
 - An interpolated string is stored with `%@` (objects, strings) or `%lld` (Int) in place of the
   value; the Chinese value must use the same specifiers (order may differ; `%1$@` is fine).
 - No Chinese in Swift. Never edit the `.xcstrings` files by hand.
-- After editing: `python3 Tools/Strings/merge.py`, and read the "unused" lines.
+- After editing: `python3 Tools/Strings/merge.py`, and read the "unused" lines. The app ships the
+  `.xcstrings` on disk, not these tables: `python3 Tools/Strings/merge.py --check` fails when one is
+  out of date, so run it before committing.

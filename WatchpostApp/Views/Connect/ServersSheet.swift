@@ -421,13 +421,13 @@ struct ServersSheet: View {
         Section {
             Link("Privacy Policy", destination: SupportPages.privacyPolicy)
                 .accessibilityIdentifier("servers.privacy")
-            Toggle("Share anonymous usage statistics", isOn: Binding(
+            Toggle("Share usage statistics", isOn: Binding(
                 get: { usage.isSharing },
                 set: { usage.setSharing($0) }
             ))
             .accessibilityIdentifier("servers.statistics")
         } footer: {
-            Text("Counts which screens are opened and how often the app runs. Never the server address, the password or the recordings.",
+            Text("Shares page visits and app use, app and device details, and a random installation ID. No server address, password or recordings. Crash reports are sent even when this is off.",
                  comment: "Servers page: what the usage statistics switch covers")
         }
     }

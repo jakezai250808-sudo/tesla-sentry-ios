@@ -72,24 +72,35 @@ struct AppConfigurationTests {
     }
 
     /// The manifest names what leaves the device, and no more: crash reports, screen counts, feedback with its
-    /// images, and tip purchases. None of it is tied to a person or used for tracking.
+    /// images, the device identifier they travel with, and tip purchases. Each is declared as linked to the
+    /// person, which is how Apple defines data that goes with a device identifier: statistics and crash
+    /// reports each keep a per-install number, feedback and crashes share one device-proof key, and a
+    /// purchase report is Apple's own signed record of one transaction. None of it is declared as tracking.
     @Test
-    func privacyManifestNamesWhatIsSentAndNothingIsLinkedOrTracking() throws {
+    func privacyManifestNamesWhatIsSentAndTracksNobody() throws {
         let url = try #require(Bundle.main.url(forResource: "PrivacyInfo", withExtension: "xcprivacy"))
         let manifest = try #require(PropertyListSerialization.propertyList(from: Data(contentsOf: url), format: nil) as? [String: Any])
         #expect(manifest["NSPrivacyTrackingDomains"] as? [String] == [])
 
+        let analytics = "NSPrivacyCollectedDataTypePurposeAnalytics"
+        let functionality = "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+        let expected: [String: [String]] = [
+            "NSPrivacyCollectedDataTypeCrashData": [functionality],
+            "NSPrivacyCollectedDataTypeProductInteraction": [analytics],
+            "NSPrivacyCollectedDataTypeCustomerSupport": [functionality],
+            "NSPrivacyCollectedDataTypePhotosorVideos": [functionality],
+            "NSPrivacyCollectedDataTypePurchaseHistory": [analytics],
+            "NSPrivacyCollectedDataTypeDeviceID": [analytics, functionality],
+        ]
+
         let collected = try #require(manifest["NSPrivacyCollectedDataTypes"] as? [[String: Any]])
-        #expect(collected.compactMap { $0["NSPrivacyCollectedDataType"] as? String } == [
-            "NSPrivacyCollectedDataTypeCrashData", "NSPrivacyCollectedDataTypeProductInteraction",
-            "NSPrivacyCollectedDataTypeCustomerSupport", "NSPrivacyCollectedDataTypePhotosorVideos",
-            "NSPrivacyCollectedDataTypePurchaseHistory",
-        ])
+        #expect(collected.count == expected.count)
         for type in collected {
-            #expect(type["NSPrivacyCollectedDataTypeLinked"] as? Bool == false, "\(type)")
-            #expect(type["NSPrivacyCollectedDataTypeTracking"] as? Bool == false, "\(type)")
-            let purposes = try #require(type["NSPrivacyCollectedDataTypePurposes"] as? [String])
-            #expect(!purposes.isEmpty && !purposes.contains("NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising"))
+            let name = try #require(type["NSPrivacyCollectedDataType"] as? String, "\(type)")
+            let purposes = try #require(expected[name], "the manifest declares \(name), which this test does not know")
+            #expect(type["NSPrivacyCollectedDataTypeLinked"] as? Bool == true, "\(name)")
+            #expect(type["NSPrivacyCollectedDataTypeTracking"] as? Bool == false, "\(name)")
+            #expect(type["NSPrivacyCollectedDataTypePurposes"] as? [String] == purposes, "\(name)")
         }
     }
 

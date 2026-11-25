@@ -75,7 +75,7 @@ struct SupportDeveloperSheet: View {
 
     private var tipsPage: some View {
         VStack(alignment: .leading, spacing: Metrics.groupSpacing) {
-            Text("Tips are voluntary. Connecting, playback and export stay free, and a tip unlocks nothing.",
+            Text("Tips are optional. Connecting, playback and export are free. A tip doesn't unlock any features.",
                  comment: "First line of the tips page")
                 .font(.body)
                 .foregroundStyle(Color.labelSecondary)
@@ -90,8 +90,8 @@ struct SupportDeveloperSheet: View {
             }
 
             if tips.isAwaitingApproval {
-                Text("Your tip is waiting for approval in the App Store. The thank-you comes once it goes through.",
-                     comment: "Tips page: an Ask to Buy approval is still pending")
+                Text("Your purchase is pending. We'll show a thank-you when it's confirmed.",
+                     comment: "Tips page: the App Store is still confirming the purchase")
                     .font(.footnote)
                     .foregroundStyle(Color.labelSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -99,7 +99,7 @@ struct SupportDeveloperSheet: View {
             }
 
             if tips.foundNoEarlierTips {
-                Text("No earlier tips were found for this Apple Account.",
+                Text("No tip records could be restored.",
                      comment: "Tips page: Restore Purchases found nothing")
                     .font(.footnote)
                     .foregroundStyle(Color.labelSecondary)
@@ -111,7 +111,7 @@ struct SupportDeveloperSheet: View {
                 Task { await tips.restoreEarlierTips() }
             }
             .buttonStyle(PlainActionButtonStyle())
-            .disabled(isBusy)
+            .disabled(isBusy || tips.isRestoring)
             .frame(maxWidth: .infinity)
             .accessibilityIdentifier("support.restore")
         }
@@ -126,7 +126,7 @@ struct SupportDeveloperSheet: View {
                 .accessibilityIdentifier("support.loading")
         } else if tips.products.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Tips can't be loaded right now.", comment: "Tips page: the App Store could not be reached")
+                Text("Tip options aren't available right now.", comment: "Tips page: the App Store could not be reached")
                     .font(.body)
                     .foregroundStyle(Color.labelPrimary)
                 Button("Try again") {
@@ -141,8 +141,8 @@ struct SupportDeveloperSheet: View {
             }
 
             if tips.problem == .purchaseFailed {
-                Text("The purchase didn't complete, so nothing was paid.",
-                     comment: "Tips page: the purchase failed")
+                Text("We couldn't confirm the purchase. Check your App Store purchase history before trying again.",
+                     comment: "Tips page: the purchase could not be confirmed")
                     .font(.footnote)
                     .foregroundStyle(Color.warning)
                     .fixedSize(horizontal: false, vertical: true)

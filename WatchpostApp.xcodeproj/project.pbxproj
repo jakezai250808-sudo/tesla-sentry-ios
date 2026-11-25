@@ -80,7 +80,10 @@
 		A1B2C3D40000000000000004 /* WatchpostAppTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1B2C3D40000000000000005;
-			buildPhases = (A1B2C3D40000000000000006 /* Sources */,);
+			buildPhases = (
+				A1B2C3D40000000000000006 /* Sources */,
+				B7D3E9F41A2C48065E9D7B32 /* Resources */,
+			);
 			buildRules = ();
 			dependencies = (A1B2C3D40000000000000007 /* App dependency */,);
 			fileSystemSynchronizedGroups = (A1B2C3D40000000000000003 /* WatchpostAppTests */,);
@@ -171,6 +174,13 @@
 
 /* Begin PBXResourcesBuildPhase section */
 		64723A455F920BBCE48BF909 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3E9F41A2C48065E9D7B32 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -430,8 +440,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/PostHog/posthog-ios";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.98.2;
+				kind = exactVersion;
+				version = 3.98.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

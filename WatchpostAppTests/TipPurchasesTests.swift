@@ -16,6 +16,10 @@ final class FakeTipStore: TipStore, @unchecked Sendable {
     private var stored: [TipReceipt]
     /// Tips the App Store took back and still lists, as after a refund while the app was away.
     private var takenBack: [UInt64]
+    /// How long a look for earlier tips takes, as a real one does.
+    var lookTakes: Duration = .zero
+    /// How many looks for earlier tips were started.
+    private(set) var looks = 0
     /// How often the store was asked for its listener.
     private var listenerAsks = 0
     private var scripted: Answer
@@ -94,7 +98,11 @@ final class FakeTipStore: TipStore, @unchecked Sendable {
 
     func unfinishedTips() async -> [TipReceipt] { unfinishedTips }
 
-    func refundedTips() async -> [UInt64] { listedAsTakenBack }
+    func refundedTips() async -> [UInt64] {
+        looks += 1
+        if lookTakes > .zero { try? await Task.sleep(for: lookTakes) }
+        return listedAsTakenBack
+    }
 
     var laterTips: LaterTips {
         lock.withLock { listenerAsks += 1 }
@@ -427,6 +435,29 @@ struct TipPurchasesTests {
         #expect(tips.foundNoEarlierTips)
 
         await tips.buy(listedTips[0])
+        #expect(!tips.foundNoEarlierTips)
+    }
+
+    /// Restore looks at the App Store, which takes a moment. A second tap meanwhile starts no second look,
+    /// which could answer "nothing found" after the first one already brought a tip back.
+    @Test
+    @MainActor
+    func secondRestoreDuringALookIsIgnored() async {
+        let older = receipt(0, daysAgo: 30)
+        let store = FakeTipStore(listing: listedTips, unfinished: [older])
+        store.lookTakes = .milliseconds(200)
+        let (tips, _) = makeTips(store: store)
+
+        let first = Task { await tips.restoreEarlierTips() }
+        await until { tips.isRestoring }
+        #expect(tips.isRestoring)
+
+        await tips.restoreEarlierTips()
+        #expect(store.looks == 1)
+
+        await first.value
+        #expect(!tips.isRestoring)
+        #expect(tips.ticket == older)
         #expect(!tips.foundNoEarlierTips)
     }
 

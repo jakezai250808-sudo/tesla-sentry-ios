@@ -1,0 +1,83 @@
+{
+  "identifier" : "7C2E9A14",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "3F8A1C5E",
+      "localizations" : [
+        {
+          "description" : "A small thank-you to the developer. It unlocks nothing.",
+          "displayName" : "A Little Support",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "给开发者的一点心意，不解锁任何功能。",
+          "displayName" : "一份心意",
+          "locale" : "zh_CN"
+        }
+      ],
+      "productID" : "com.jakezai.watchpost.pwvw.tip.alittle",
+      "referenceName" : "A Little Support",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "9B4D2E67",
+      "localizations" : [
+        {
+          "description" : "A bigger thank-you to the developer. It unlocks nothing.",
+          "displayName" : "More Support",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "给开发者更多的支持，不解锁任何功能。",
+          "displayName" : "更多支持",
+          "locale" : "zh_CN"
+        }
+      ],
+      "productID" : "com.jakezai.watchpost.pwvw.tip.extra",
+      "referenceName" : "More Support",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "E6C1F7A2",
+      "localizations" : [
+        {
+          "description" : "A generous thank-you to the developer. It unlocks nothing.",
+          "displayName" : "Extra Support",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "给开发者特别的支持，不解锁任何功能。",
+          "displayName" : "特别支持",
+          "locale" : "zh_CN"
+        }
+      ],
+      "productID" : "com.jakezai.watchpost.pwvw.tip.generous",
+      "referenceName" : "Extra Support",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

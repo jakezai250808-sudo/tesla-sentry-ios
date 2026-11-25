@@ -316,6 +316,10 @@ nonisolated extension AirCrashReports {
                 + #"(?:(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]+|localhost):\d{1,5}\b"#
                 // A home server's name, or `localhost` by itself.
                 + #"|(?<![/\\A-Za-z0-9_.-])(?:[A-Za-z0-9-]+\.)+(?:local|lan|home\.arpa|home|internal)\b"#
+                // A server's name on the public internet, with neither scheme nor port, under one of the
+                // endings people keep home servers on. Only those: a file's or a symbol's name ends in
+                // others (`Models.swift`, `AppModel.connect`), and those are worth more than a rare name.
+                + #"|(?<![/\\A-Za-z0-9_.-])(?:[A-Za-z0-9._%+-]+@)?(?:[A-Za-z0-9-]+\.)+(?:com|net|org|cn|me|to|io|xyz|top|cc|tv|site|online|link|cloud|club|vip|work|pro|live|fun|shop|store|tech|host|space|digital|network|uk|de|jp|kr|hk|tw|sg|ru|fr|eu|ca|au|nl|se|pl|es|pt|br|ar|mx|nz|ie|il|tr|za|th|vn|ph|ch|fi|dk|cz|hu|ro|ua)\b"#
                 + #"|\blocalhost\b"#,
         options: .caseInsensitive)
 

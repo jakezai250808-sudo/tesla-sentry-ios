@@ -41,6 +41,10 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
+## 打赏
+
+打赏是自愿的应用内购买，不解锁任何功能。想不花钱试一试，把 `WatchpostAppTests/Tips.storekit` 设为 scheme 的 StoreKit Configuration（Product ▸ Scheme ▸ Edit Scheme…，Run ▸ Options）再运行：购买走 StoreKit Testing，不会真的扣款。这样买的打赏和其他打赏一样会上报，收据是 StoreKit Testing 的。打赏的 App Store 逻辑由单元测试用同一个文件覆盖（`WatchpostAppTests/StoreKitTipStoreTests.swift`）：在另一台设备上买的打赏、退款、购买前询问（Ask to Buy），以及 Apple 未能验证的购买。测试里买的东西一律不上报。
+
 ## 隐私
 
 - 不建账号，没有自己的云服务。除了你填写的地址，App 只和开发者的上报服务（`apps.air.build`）通信：可以关掉的使用统计、崩溃报告、你主动发出的反馈、打赏购买记录。不含广告 SDK。

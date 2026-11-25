@@ -43,7 +43,8 @@ enum TipStoreProblem: Error, Equatable, Sendable {
 struct LaterTips: Sendable {
     /// Tips it confirms, as when Ask to Buy is approved. Each is reported and finished before it arrives.
     var purchases: AsyncStream<TipReceipt>
-    /// Tips it takes back, a refund, by the App Store's number for the purchase.
+    /// Tips it takes back, a refund, by the App Store's number for the purchase. Covers refunds of tips
+    /// this device finished, which only the full history still lists.
     /// Each is reported and finished before it arrives.
     var refunds: AsyncStream<UInt64>
 }
@@ -99,9 +100,12 @@ struct StoreKitTipStore: TipStore {
         }
     }
 
+    /// A tip is a consumable, and Apple leaves consumables out of the current entitlements: read from
+    /// there this always came back empty, so Restore could never find a tip. The unfinished list is
+    /// where Apple says to look. One the App Store has already revoked is left for `refundedTips`.
     func unfinishedTips() async -> [TipReceipt] {
         var receipts: [TipReceipt] = []
-        for await verification in Transaction.currentEntitlements {
+        for await verification in Transaction.unfinished {
             guard case .verified(let transaction) = verification,
                   productIDs.contains(transaction.productID),
                   transaction.revocationDate == nil else { continue }
@@ -113,11 +117,18 @@ struct StoreKitTipStore: TipStore {
         return receipts
     }
 
+    /// A refund stays in the full history with the day it was revoked, and the current entitlements
+    /// drop it: read from there this always came back empty too, so a refund was only ever heard of
+    /// through the listener. Only revoked tips are touched here; a purchase still unfinished is left
+    /// whole for `unfinishedTips`, which turns it into the ticket.
     func refundedTips() async -> [UInt64] {
         var numbers: [UInt64] = []
-        for await verification in Transaction.currentEntitlements {
+        var seen: Set<UInt64> = []
+        for await verification in Transaction.all {
             guard case .verified(let transaction) = verification,
-                  productIDs.contains(transaction.productID), transaction.revocationDate != nil else { continue }
+                  productIDs.contains(transaction.productID),
+                  transaction.revocationDate != nil,
+                  seen.insert(transaction.id).inserted else { continue }
             PurchaseReporter.report(verification)
             await transaction.finish()
             numbers.append(transaction.id)

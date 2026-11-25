@@ -4,6 +4,7 @@
 Usage (from the project root):
   Tools/Strings/merge.py            merge + write the catalog, then audit
   Tools/Strings/merge.py --check    audit only (nothing written); exit 1 when a key is missing
+                                    or a catalog on disk is not what the tables give
   Tools/Strings/merge.py --list     print every key the Swift sources use, with its zh-Hans
 
 The catalog is generated, never edited by hand: change a JSON file and merge again.
@@ -276,7 +277,8 @@ def load_tables():
     return tables, errors
 
 
-def write_catalog(tables, target):
+def catalog_text(tables, target):
+    """The catalog's whole text as it is written for `target`, and how many keys are in it."""
     strings = {}
     for key in sorted(k for k in tables if tables[k][3] == target):
         value, comment = tables[key][:2]
@@ -288,9 +290,23 @@ def write_catalog(tables, target):
     doc = {"sourceLanguage": "en", "strings": strings, "version": "1.0"}
     text = json.dumps(doc, indent=2, ensure_ascii=False, sort_keys=True)
     text = re.sub(r'^(\s*"[^"\\]*"):(\s)', r"\1 :\2", text, flags=re.M)  # Xcode's own spacing
+    return text + "\n", len(strings)
+
+
+def write_catalog(tables, target):
+    text, count = catalog_text(tables, target)
     with open(target, "w", encoding="utf-8") as fh:
-        fh.write(text + "\n")
-    return len(strings)
+        fh.write(text)
+    return count
+
+
+def is_current(tables, target):
+    """Whether the catalog on disk is exactly what the tables give now."""
+    try:
+        with open(target, encoding="utf-8") as fh:
+            return fh.read() == catalog_text(tables, target)[0]
+    except OSError:
+        return False
 
 
 def main(argv):
@@ -322,13 +338,21 @@ def main(argv):
         print("REVIEW   " + note)
     for key in unused:
         print("unused   {!r}  ({})".format(key, app_tables[key][2]))
+    stale = []
     if not list_only:
         if not errors and not check:
             for target in (CATALOG, INFO_CATALOG):
                 n = write_catalog(tables, target)
                 print("wrote {} keys to {}".format(n, os.path.relpath(target, ROOT)))
-        print("{} keys in code, {} in tables, {} missing, {} unused".format(len(uses), len(app_tables), len(missing), len(unused)))
-    return 1 if (errors or cjk or missing) else 0
+        if check:
+            # What ships is the catalog on disk, so that is checked too, not only the tables.
+            stale = [target for target in (CATALOG, INFO_CATALOG) if not is_current(tables, target)]
+            for target in stale:
+                print("STALE    {} is not what Tools/Strings/*.json give: run Tools/Strings/merge.py"
+                      .format(os.path.relpath(target, ROOT)))
+        print("{} keys in code, {} in tables, {} missing, {} unused, {} catalog(s) out of date"
+              .format(len(uses), len(app_tables), len(missing), len(unused), len(stale)))
+    return 1 if (errors or cjk or missing or stale) else 0
 
 
 if __name__ == "__main__":

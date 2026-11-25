@@ -88,14 +88,19 @@ enum FeedbackClient {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw Failure(message: "No response from the server.")
+            // Localized here, where the message is made: the form shows it as it is.
+            throw Failure(message: String(localized: "Couldn't send feedback. Please try again.",
+                                           comment: "Feedback form: the feedback could not be sent"))
         }
         if !proof.isEmpty {
             await AirDeviceProof.handle(status: http.value(forHTTPHeaderField: "X-Attest-Status"))
         }
         guard (200 ..< 300).contains(http.statusCode) else {
             let reason = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["reason"] as? String
-            throw Failure(message: reason ?? "The server answered \(http.statusCode).")
+            // Localized here, where the message is made; the form shows it as it is.
+            let fallback = String(localized: "The server answered \(http.statusCode).",
+                                             comment: "Feedback form: the feedback server refused the feedback")
+            throw Failure(message: reason ?? fallback)
         }
     }
 
@@ -148,8 +153,10 @@ struct FeedbackView: View {
                     TextField("What happened, or what would you like to see?", text: $message, axis: .vertical)
                         .lineLimit(5 ... 12)
                 } footer: {
-                    // Watchpost's one addition to the template: what this app never hands over.
-                    Text("Your server address, password and recordings are never included.", comment: "Feedback form: promise about what is never sent")
+                    // Watchpost's one addition to the template: what the app does not add by itself,
+                    // and a reminder that what the person writes or picks goes as written.
+                    Text("Your server address, password and recordings aren't added automatically. Check your text and screenshots for private information before sending.",
+                         comment: "Feedback form: what the app does not add by itself, and to check before sending")
                 }
                 Section {
                     if !images.isEmpty {
@@ -186,7 +193,7 @@ struct FeedbackView: View {
                     }
                     .disabled(images.count >= FeedbackConfig.maximumImages)
                 } footer: {
-                    Text("Up to \(FeedbackConfig.maximumImages) images. The app version, device model, system version, language and region are sent along.")
+                    Text("Up to \(FeedbackConfig.maximumImages) images. Feedback also includes the app version, device model, system version, language and region.")
                 }
                 if let failure {
                     Section {

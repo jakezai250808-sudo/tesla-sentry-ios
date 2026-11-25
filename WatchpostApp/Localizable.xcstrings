@@ -408,6 +408,17 @@
         }
       }
     },
+    "Couldn't send feedback. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "反馈发送失败，请重试。"
+          }
+        }
+      }
+    },
     "Couldn't switch to %@. Still playing %@." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -415,17 +426,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法切到%@，仍在播放%@。"
-          }
-        }
-      }
-    },
-    "Counts which screens are opened and how often the app runs. Never the server address, the password or the recordings." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "只统计打开了哪些页面和 App 的使用次数，不包含服务器地址、密码和录像。"
           }
         }
       }
@@ -926,17 +926,6 @@
         }
       }
     },
-    "No earlier tips were found for this Apple Account." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这个 Apple 账户下没有找到之前的打赏。"
-          }
-        }
-      }
-    },
     "No events match this filter" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1003,17 +992,6 @@
         }
       }
     },
-    "No response from the server." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "服务器没有响应。"
-          }
-        }
-      }
-    },
     "No telemetry for this clip" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1021,6 +999,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "该片段暂无遥测"
+          }
+        }
+      }
+    },
+    "No tip records could be restored." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可恢复的打赏记录。"
           }
         }
       }
@@ -1542,13 +1531,24 @@
         }
       }
     },
-    "Share anonymous usage statistics" : {
+    "Share usage statistics" : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "分享匿名使用统计"
+            "value" : "分享使用统计"
+          }
+        }
+      }
+    },
+    "Shares page visits and app use, app and device details, and a random installation ID. No server address, password or recordings. Crash reports are sent even when this is off." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "统计页面访问和应用使用次数，附带应用与设备信息及随机安装编号，不含服务器地址、密码或录像。关闭统计不会停发崩溃报告。"
           }
         }
       }
@@ -1740,13 +1740,13 @@
         }
       }
     },
-    "The purchase didn't complete, so nothing was paid." : {
+    "The server answered %lld." : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "购买没有完成，没有扣款。"
+            "value" : "反馈服务器返回了 %lld。"
           }
         }
       }
@@ -1795,6 +1795,17 @@
         }
       }
     },
+    "This is a thank-you from Watchpost. For your purchase record, check your App Store purchase history." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是岗哨的致谢记录。购买详情请查看 App Store 的购买记录。"
+          }
+        }
+      }
+    },
     "This only removes it from this phone. Nothing on the server is deleted." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1817,17 +1828,6 @@
         }
       }
     },
-    "This ticket is Watchpost's own record. The App Store keeps the receipt in your purchase history." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本小票由岗哨记录，Apple 的购买凭证在 App Store 的购买记录里。"
-          }
-        }
-      }
-    },
     "Tip amount" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1839,7 +1839,18 @@
         }
       }
     },
-    "Tip date" : {
+    "Tip options aren't available right now." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法加载打赏选项。"
+          }
+        }
+      }
+    },
+    "Tip time" : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
@@ -1850,24 +1861,13 @@
         }
       }
     },
-    "Tips are voluntary. Connecting, playback and export stay free, and a tip unlocks nothing." : {
+    "Tips are optional. Connecting, playback and export are free. A tip doesn't unlock any features." : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "打赏完全自愿。连接、播放和导出始终免费，打赏不解锁任何功能。"
-          }
-        }
-      }
-    },
-    "Tips can't be loaded right now." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "现在无法加载打赏。"
+            "value" : "打赏自愿。连接、播放和导出免费，打赏不解锁任何功能。"
           }
         }
       }
@@ -1982,13 +1982,13 @@
         }
       }
     },
-    "Up to %lld images. The app version, device model, system version, language and region are sent along." : {
+    "Up to %lld images. Feedback also includes the app version, device model, system version, language and region." : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最多 %lld 张图片，会一并发送 App 版本、设备型号、系统版本，以及语言和地区。"
+            "value" : "最多 %lld 张图片。反馈会附带应用版本、设备型号、系统版本、语言和地区。"
           }
         }
       }
@@ -2037,6 +2037,17 @@
         }
       }
     },
+    "We couldn't confirm the purchase. Check your App Store purchase history before trying again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法确认购买结果，请先查看 App Store 购买记录，再重试。"
+          }
+        }
+      }
+    },
     "What happened, or what would you like to see?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2070,13 +2081,24 @@
         }
       }
     },
-    "Your server address, password and recordings are never included." : {
+    "Your purchase is pending. We'll show a thank-you when it's confirmed." : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "不会附带服务器地址、密码和任何录像。"
+            "value" : "购买正在等待确认，确认后会显示致谢页。"
+          }
+        }
+      }
+    },
+    "Your server address, password and recordings aren't added automatically. Check your text and screenshots for private information before sending." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不会自动附带服务器地址、密码或录像。发送前，请检查文字和截图中的私人信息。"
           }
         }
       }
@@ -2092,24 +2114,13 @@
         }
       }
     },
-    "Your support keeps Watchpost going." : {
+    "Your support helps us improve Watchpost." : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你的支持让岗哨继续做下去。"
-          }
-        }
-      }
-    },
-    "Your tip is waiting for approval in the App Store. The thank-you comes once it goes through." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的打赏正在等待 App Store 批准，通过后会显示感谢小票。"
+            "value" : "你的支持帮助我们继续改进岗哨。"
           }
         }
       }

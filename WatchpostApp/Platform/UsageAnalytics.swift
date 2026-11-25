@@ -17,7 +17,8 @@ enum UsageScreen: String, CaseIterable, Sendable {
 }
 
 /// The whole rule for what one usage event may carry, besides the SDK's own envelope
-/// (a random per-install identifier, a session identifier and the time).
+/// (a random per-install identifier, the event's own number and the time). The SDK's session number
+/// is a property, which the rule below drops.
 enum UsageEventRule {
     static let screenEvent = "$screen"
     static let screenName = "$screen_name"
@@ -256,9 +257,10 @@ final class UsageAnalytics {
     }
 
     /// The switch, kept for the next launch. Turning it off stops the SDK on the spot: from
-    /// that line on the network gate lets none of its requests through, not even a batch that
-    /// was already waiting, and what it had not sent yet, with its install number, is deleted.
-    /// Turning it on again starts it fresh, under a new number.
+    /// that line on the network gate refuses every request the SDK starts, and what it had not
+    /// handed to the network yet, with its install number, is deleted. One batch that was already
+    /// on its way can still arrive; the privacy page says so. Turning it on again starts it
+    /// fresh, under a new number.
     func setSharing(_ sharing: Bool) {
         guard sharing != isSharing else { return }
         // Written first: the network gate reads this, so nothing leaves from here on.

@@ -30,6 +30,14 @@ enum PurchaseReporter {
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "app", category: "AppPurchases")
     @MainActor private static var listener: Task<Void, Never>?
 
+    /// Where a verified transaction goes. Tests watch the calls instead of sending them.
+    nonisolated(unsafe) static var sender: @Sendable (VerificationResult<Transaction>) -> Void = deliverToFeed
+
+    private static func deliverToFeed(_ result: VerificationResult<Transaction>) {
+        guard case .verified(let transaction) = result else { return }
+        Task { await send(result.jwsRepresentation, id: String(transaction.id)) }
+    }
+
     /// Listens for transactions that arrive outside the purchase flow
     /// (completed while the app was away, renewals, Ask to Buy). Call once
     /// at launch; a second call is ignored. Does not finish transactions —
@@ -48,8 +56,7 @@ enum PurchaseReporter {
     /// Only StoreKit-verified results are sent; anything else would be
     /// refused by the backend anyway.
     static func report(_ result: VerificationResult<Transaction>) {
-        guard case .verified(let transaction) = result else { return }
-        Task { await send(result.jwsRepresentation, id: String(transaction.id)) }
+        sender(result)
     }
 
     /// One POST, one log line, no retry: a report that fails is a sale

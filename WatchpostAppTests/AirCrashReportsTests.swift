@@ -1576,7 +1576,8 @@ struct AirCrashReportBodyTests {
     }
 
     /// The other ways an address gets written: `localhost`, a home server's name on its own, an IPv6
-    /// number, a web address without its scheme. What the sentence puts around it stays.
+    /// number, a web address without its scheme, a server's name under a public ending. What the
+    /// sentence puts around it stays.
     @Test(arguments: zip([
         "localhost:8080 refused",
         "at myserver.local",
@@ -1590,6 +1591,10 @@ struct AirCrashReportBodyTests {
         "(http://a.example/x).",
         "192.168.1.1.",
         "tcp://jake:secret@10.0.0.5:22/x",
+        "Could not resolve vault.example.com",
+        "my-nas.synology.me refused",
+        "quickconnect.to is down",
+        "mail jake@example.com",
     ], [
         "<address> refused",
         "at <address>",
@@ -1603,6 +1608,10 @@ struct AirCrashReportBodyTests {
         "(<address>).",
         "<address>.",
         "<address>",
+        "Could not resolve <address>",
+        "<address> refused",
+        "<address> is down",
+        "mail <address>",
     ]))
     func otherWaysOfWritingAnAddressAreTakenOut(_ text: String, _ wanted: String) {
         #expect(AirCrashReports.redacted(text) == wanted)
@@ -1634,6 +1643,7 @@ struct AirCrashReportBodyTests {
         "std::__1::vector<int>",
         "port:8080 and Code=-1001 and line: 42",
         "WatchpostApp.AppModel.connect()",
+        "Safari.app, Info.plist, 3.98.2 and report.id",
     ])
     func ordinaryExceptionTextIsLeftAlone(_ text: String) {
         #expect(AirCrashReports.redacted(text) == text, "changed")

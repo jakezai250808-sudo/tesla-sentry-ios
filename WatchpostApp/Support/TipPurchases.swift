@@ -45,6 +45,8 @@ final class TipPurchases {
     private(set) var confirmations = 0
     /// A tip just went through and its thank-you has not been shown yet.
     var showsTicket = false
+    /// A look for earlier tips is under way, so Restore waits for it instead of starting a second.
+    private(set) var isRestoring = false
     /// The tips page is on screen, so a thank-you is shown there and not over the whole app.
     var isPageOpen = false
 
@@ -121,6 +123,9 @@ final class TipPurchases {
     /// Asks the App Store for tips this Apple account bought that this device has not
     /// seen, so an earlier ticket comes back. Nothing is bought.
     func restoreEarlierTips() async {
+        guard !isRestoring else { return }
+        isRestoring = true
+        defer { isRestoring = false }
         // A tip the App Store took back is no longer the newest tip, whatever else comes back.
         for number in await store.refundedTips() { takeBack(number) }
         let found = await store.unfinishedTips()
