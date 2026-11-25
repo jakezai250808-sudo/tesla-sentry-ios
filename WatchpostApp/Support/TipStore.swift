@@ -44,9 +44,9 @@ struct LaterTips: Sendable {
     /// Tips it confirms, as when Ask to Buy is approved. Each is reported and finished before it arrives.
     var purchases: AsyncStream<TipReceipt>
     /// Tips it takes back, a refund, by the App Store's number for the purchase: whatever the listener
-    /// hands over. Each is reported and finished before it arrives. No unit test exercises this stream:
-    /// in StoreKit Testing a running listener was handed a refund in some runs and not in others,
-    /// so it is left to a real device.
+    /// hands over. Each is reported and finished before it arrives. No unit test sees the real store's
+    /// word here: in StoreKit Testing a running listener was handed a refund in some runs and not in
+    /// others, so that is left to a real device.
     var refunds: AsyncStream<UInt64>
 }
 
