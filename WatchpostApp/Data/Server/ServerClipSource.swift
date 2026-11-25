@@ -12,15 +12,21 @@ final class ServerClipSource: ClipSource {
     private let pollInterval: Duration
     private let maxPolls: Int
     private let clientID: String
+    /// Where a finished export is put, under its own name. The app passes nothing to `init` and
+    /// gets `WatchpostExports` under the temporary directory; a test passes its own so that tests
+    /// running side by side do not take each other's files away.
+    private let exportsDirectory: URL
     /// The `rev` of the last `/api/live/demand`; the server refuses one older than it has seen.
     private let demandRevision = OSAllocatedUnfairLock(initialState: 0)
 
     init(session: ServerSession, pollInterval: Duration = .milliseconds(1500), maxPolls: Int = 120,
-         clientID: String = ServerClipSource.makeClientID()) {
+         clientID: String = ServerClipSource.makeClientID(), exportsDirectory: URL? = nil) {
         self.session = session
         self.pollInterval = pollInterval
         self.maxPolls = max(0, maxPolls)
         self.clientID = clientID
+        self.exportsDirectory = exportsDirectory
+            ?? FileManager.default.temporaryDirectory.appendingPathComponent("WatchpostExports", isDirectory: true)
     }
 
     /// 32 lowercase hex digits, which is what `/api/live/demand` checks a client id for.
@@ -317,7 +323,7 @@ final class ServerClipSource: ClipSource {
     func downloadExport(_ handle: ExportHandle,
                         progress: @escaping @Sendable (ExportProgress) -> Void) async throws -> URL {
         let files = FileManager.default
-        let directory = files.temporaryDirectory.appendingPathComponent("WatchpostExports", isDirectory: true)
+        let directory = exportsDirectory
         let destination = directory.appendingPathComponent(handle.fileName)
         do {
             try files.createDirectory(at: directory, withIntermediateDirectories: true)

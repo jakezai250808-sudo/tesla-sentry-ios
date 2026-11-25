@@ -8,10 +8,6 @@ struct ServerClipSourceTests {
     private static let sourcePath = "/api/playback-source"
     private static let media = "/media/SentryClips/2026-11-08_19-43-36/2026-11-08_19-43-36-front.mp4"
 
-    private static func temporaryExports() -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("WatchpostExports", isDirectory: true)
-    }
-
     /// Per-path answers, for the tests whose playback plan sends a hint on the side while it waits.
     private static func routingTransport(sourceAnswers: [StubTransport.Reply]) -> RoutingTransport {
         let transport = RoutingTransport()
@@ -364,10 +360,11 @@ struct RefusalCase: Sendable {
     }
 
     @Test func theFinishedFileIsBroughtToThePhoneUnderItsOwnName() async throws {
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = StubTransport([.ok("MP4", headers: ["Content-Type": "video/mp4", "Content-Length": "3"])])
         let progress = Box<[ExportProgress]>([])
-        let file = try await Fixtures.source(transport).downloadExport(Self.handle()) { value in progress.update { $0.append(value) } }
-        defer { try? FileManager.default.removeItem(at: Self.temporaryExports()) }
+        let file = try await Fixtures.source(transport, exports: own).downloadExport(Self.handle()) { value in progress.update { $0.append(value) } }
         #expect(file.lastPathComponent == "2026-11-08_19-43-36_front.mp4")
         #expect(file.deletingLastPathComponent().lastPathComponent == "WatchpostExports")
         #expect(try String(contentsOf: file, encoding: .utf8) == "MP4")
@@ -378,34 +375,49 @@ struct RefusalCase: Sendable {
         #expect(sent.query == "id=2026-11-08_19-43-36-ex482913")
     }
 
+    @Test func theSameFileExportedByTwoSourcesKeepsBothCopies() async throws {
+        let first = OwnExports()
+        let second = OwnExports()
+        defer { first.remove(); second.remove() }
+        let a = StubTransport([.ok("ONE", headers: ["Content-Length": "3"])])
+        let b = StubTransport([.ok("TWO", headers: ["Content-Length": "3"])])
+        let fromA = try await Fixtures.source(a, exports: first).downloadExport(Self.handle()) { _ in }
+        let fromB = try await Fixtures.source(b, exports: second).downloadExport(Self.handle()) { _ in }
+        #expect(fromA != fromB)
+        #expect(try String(contentsOf: fromA, encoding: .utf8) == "ONE", "The second export leaves the first file whole")
+        #expect(try String(contentsOf: fromB, encoding: .utf8) == "TWO")
+    }
+
     @Test func aFileThatIsGoneIsExpiredAndAnythingElseIsTheServersWords() async throws {
-        let destination = Self.temporaryExports().appendingPathComponent("2026-11-08_19-43-36_front.mp4")
+        let own = OwnExports()
+        defer { own.remove() }
+        let destination = own.directory.appendingPathComponent("2026-11-08_19-43-36_front.mp4")
         try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Data("HALF".utf8).write(to: destination)
-        defer { try? FileManager.default.removeItem(at: destination.deletingLastPathComponent()) }
 
         let gone = StubTransport([.status(404, "gone")])
-        await #expect(throws: ExportFailure.expired) { try await Fixtures.source(gone).downloadExport(Self.handle()) { _ in } }
+        await #expect(throws: ExportFailure.expired) { try await Fixtures.source(gone, exports: own).downloadExport(Self.handle()) { _ in } }
         #expect(!FileManager.default.fileExists(atPath: destination.path), "A half copy is never left behind")
         try Data("HALF".utf8).write(to: destination)
         let refused = StubTransport([.status(503, ServerFixtures.qualityUnavailable)])
-        await #expect(throws: ExportFailure.server("所选画质暂不可用")) { try await Fixtures.source(refused).downloadExport(Self.handle()) { _ in } }
+        await #expect(throws: ExportFailure.server("所选画质暂不可用")) { try await Fixtures.source(refused, exports: own).downloadExport(Self.handle()) { _ in } }
         #expect(!FileManager.default.fileExists(atPath: destination.path))
         let offline = StubTransport([.raises(URLError(.networkConnectionLost))])
-        await #expect(throws: ExportFailure.network) { try await Fixtures.source(offline).downloadExport(Self.handle()) { _ in } }
+        await #expect(throws: ExportFailure.network) { try await Fixtures.source(offline, exports: own).downloadExport(Self.handle()) { _ in } }
         #expect(!FileManager.default.fileExists(atPath: destination.path))
     }
 
     // MARK: The whole export
 
     @Test func anExportThatIsReadyRightAwayReportsOnlyTheCopy() async throws {
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = StubTransport([.ok(ServerFixtures.exportStarted), .ok(ServerFixtures.stitchDone),
                                        .ok("MP4", headers: ["Content-Length": "3"])])
         let progress = Box<[ExportProgress]>([])
-        let file = try await Fixtures.source(transport).export(event: Fixtures.sentryEvent, video: Fixtures.video(), quality: .hd720) { value in
+        let file = try await Fixtures.source(transport, exports: own).export(event: Fixtures.sentryEvent, video: Fixtures.video(), quality: .hd720) { value in
             progress.update { $0.append(value) }
         }
-        defer { try? FileManager.default.removeItem(at: Self.temporaryExports()) }
         #expect(file.lastPathComponent == "2026-11-08_19-43-36_front.mp4")
         #expect(try String(contentsOf: file, encoding: .utf8) == "MP4")
         #expect(progress.get() == [.downloading(received: 1, total: 3), .downloading(received: 3, total: 3)])
@@ -413,13 +425,14 @@ struct RefusalCase: Sendable {
     }
 
     @Test func anExportThatTakesAWhileReportsItsProgress() async throws {
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = StubTransport([.ok(ServerFixtures.exportStarted), .ok(ServerFixtures.stitchRunning(percent: 42)),
                                        .ok(ServerFixtures.stitchDone), .ok("MP4", headers: ["Content-Length": "3"])])
         let progress = Box<[ExportProgress]>([])
-        let file = try await Fixtures.source(transport).export(event: Fixtures.sentryEvent, video: Fixtures.video(), quality: .original) { value in
+        let file = try await Fixtures.source(transport, exports: own).export(event: Fixtures.sentryEvent, video: Fixtures.video(), quality: .original) { value in
             progress.update { $0.append(value) }
         }
-        defer { try? FileManager.default.removeItem(at: Self.temporaryExports()) }
         #expect(FileManager.default.fileExists(atPath: file.path))
         #expect(progress.get() == [.generating(percent: 42),
                                   .downloading(received: 1, total: 3), .downloading(received: 3, total: 3)])
@@ -438,9 +451,11 @@ struct RefusalCase: Sendable {
     }
 
     @Test func anExportWhoseFileVanishesIsExpired() async throws {
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = StubTransport([.ok(ServerFixtures.exportStarted), .ok(ServerFixtures.stitchDone), .status(404, "gone")])
         await #expect(throws: ExportFailure.expired) {
-            try await Fixtures.source(transport).export(event: Fixtures.sentryEvent, video: Fixtures.video(), quality: .hd480) { _ in }
+            try await Fixtures.source(transport, exports: own).export(event: Fixtures.sentryEvent, video: Fixtures.video(), quality: .hd480) { _ in }
         }
         #expect(transport.sent.map(\.path) == ["/api/export/burn", "/api/stitch/status", "/api/export/burn/dl"])
     }

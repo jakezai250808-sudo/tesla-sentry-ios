@@ -4,7 +4,8 @@ import Testing
 
 // Helpers shared by the networking tests: a transport that answers from a
 // script instead of the network, a lock-box for values a `@Sendable` closure
-// has to hand back, and bodies in the server's own spelling.
+// has to hand back, bodies in the server's own spelling, and the folder of
+// one test's exports.
 
 /// Answers HTTP from a script and remembers every request it was asked.
 final class StubTransport: HTTPTransport, @unchecked Sendable {
@@ -179,6 +180,26 @@ enum FixtureError: Error {
     case notJSON(String)
 }
 
+/// The export folder of one test. Every test that exports makes its own, under a name nothing
+/// else has, so that tests running side by side do not take each other's files away.
+/// `remove()` takes that folder and nothing of anyone else's.
+struct OwnExports: Sendable {
+    /// The folder this test has to itself; the files go in a `WatchpostExports` inside it, as in the app.
+    let root: URL
+
+    init() {
+        root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WatchpostExportTests/\(UUID().uuidString)", isDirectory: true)
+    }
+
+    /// What a `ServerClipSource` is given as its export folder.
+    var directory: URL { root.appendingPathComponent("WatchpostExports", isDirectory: true) }
+
+    func remove() {
+        try? FileManager.default.removeItem(at: root)
+    }
+}
+
 enum Fixtures {
     static let base = URL(string: "http://192.168.1.50:8080")!
 
@@ -288,10 +309,12 @@ enum Fixtures {
     }
 
     /// A clip source over a session with no waiting at all between two looks at a transcode.
+    /// `exports` is where the finished export of this test goes; without it the app's folder is used.
     static func source(_ transport: any HTTPTransport, password: String? = nil, pollInterval: Duration = .milliseconds(5),
-                       maxPolls: Int = 3, clientID: String = "0123456789abcdef0123456789abcdef") -> ServerClipSource {
+                       maxPolls: Int = 3, clientID: String = "0123456789abcdef0123456789abcdef",
+                       exports: OwnExports? = nil) -> ServerClipSource {
         ServerClipSource(session: session(transport, password: password), pollInterval: pollInterval, maxPolls: maxPolls,
-                         clientID: clientID)
+                         clientID: clientID, exportsDirectory: exports?.directory)
     }
 
     /// Collects what an upgrade stream has to say, until it ends.

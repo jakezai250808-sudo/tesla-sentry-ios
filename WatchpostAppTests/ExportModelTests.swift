@@ -5,12 +5,9 @@ import Testing
 /// `ExportModel`: the one export the sheet shows, from asking about the font to the file on the phone.
 @MainActor
 struct ExportModelTests {
-    nonisolated private static func removeExports() {
-        try? FileManager.default.removeItem(at: FileManager.default.temporaryDirectory.appendingPathComponent("WatchpostExports"))
-    }
-
-    private func model(_ transport: any HTTPTransport) -> ExportModel {
-        ExportModel(source: Fixtures.source(transport), event: Fixtures.sentryEvent, video: Fixtures.video(), quality: .hd720)
+    private func model(_ transport: any HTTPTransport, exports: OwnExports) -> ExportModel {
+        ExportModel(source: Fixtures.source(transport, exports: exports), event: Fixtures.sentryEvent, video: Fixtures.video(),
+                    quality: .hd720)
     }
 
     /// The server's answers for an export that is ready at once: font present, burn started, job done, file.
@@ -22,9 +19,10 @@ struct ExportModelTests {
     // MARK: Opening
 
     @Test func openingAsksAboutTheFontAndThatIsAll() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = StubTransport([.ok(ServerFixtures.fontPresent)])
-        let model = model(transport)
+        let model = model(transport, exports: own)
         #expect(model.phase == .idle)
         #expect(model.canGenerate == false, "Nothing is known yet")
         await model.open()
@@ -40,8 +38,9 @@ struct ExportModelTests {
     }
 
     @Test func aMissingFontIsOfferedToGoWithout() async throws {
-        defer { Self.removeExports() }
-        let model = model(StubTransport([.ok(ServerFixtures.fontMissing)]))
+        let own = OwnExports()
+        defer { own.remove() }
+        let model = model(StubTransport([.ok(ServerFixtures.fontMissing)]), exports: own)
         await model.open()
         #expect(model.phase == .idle)
         #expect(model.watermark == .unavailable)
@@ -51,8 +50,9 @@ struct ExportModelTests {
 
     @Test(arguments: [StubTransport.Reply.status(500, "busy"), .raises(URLError(.timedOut)), .ok("{}")])
     func aFontQuestionThatFailsIsANetworkFailure(_ reply: StubTransport.Reply) async throws {
-        defer { Self.removeExports() }
-        let model = model(StubTransport([reply]))
+        let own = OwnExports()
+        defer { own.remove() }
+        let model = model(StubTransport([reply]), exports: own)
         await model.open()
         #expect(model.phase == .failed(.network))
         #expect(model.watermark == nil)
@@ -61,8 +61,9 @@ struct ExportModelTests {
     }
 
     @Test func openingAsksAgainAfterAFailure() async throws {
-        defer { Self.removeExports() }
-        let model = model(StubTransport([.status(500, "busy"), .ok(ServerFixtures.fontPresent)]))
+        let own = OwnExports()
+        defer { own.remove() }
+        let model = model(StubTransport([.status(500, "busy"), .ok(ServerFixtures.fontPresent)]), exports: own)
         await model.open()
         #expect(model.phase == .failed(.network))
         await model.open()
@@ -71,10 +72,11 @@ struct ExportModelTests {
     }
 
     @Test func stoppingWhileTheFontIsBeingAskedIsStillIdleWhenTheAnswerComes() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = RoutingTransport()
         transport.route("/api/font", steps: [.held(.ok(ServerFixtures.fontPresent))])
-        let model = model(transport)
+        let model = model(transport, exports: own)
         let opening = Task { await model.open() }
         #expect(await waitUntil { transport.sent(to: "/api/font").count == 1 })
         model.stopWaiting()
@@ -91,9 +93,10 @@ struct ExportModelTests {
     // MARK: Generating
 
     @Test func generateMakesTheFileAndOffersIt() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = StubTransport(Self.readyScript)
-        let model = model(transport)
+        let model = model(transport, exports: own)
         await model.open()
         model.start()
         #expect(model.isWorking)
@@ -114,8 +117,9 @@ struct ExportModelTests {
 
     @Test(arguments: [ServerFixtures.burnFontRefusal, ServerFixtures.burnFFmpegRefusal])
     func aBurningTheServerCannotDoIsShownAsTheFonts(_ body: String) async throws {
-        defer { Self.removeExports() }
-        let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .status(400, body)]))
+        let own = OwnExports()
+        defer { own.remove() }
+        let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .status(400, body)]), exports: own)
         await model.open()
         model.start()
         #expect(await settle { model.phase.isFailed })
@@ -126,8 +130,9 @@ struct ExportModelTests {
     }
 
     @Test func anyOtherRefusalIsTheServersWords() async throws {
-        defer { Self.removeExports() }
-        let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .status(400, ServerFixtures.burnBusy)]))
+        let own = OwnExports()
+        defer { own.remove() }
+        let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .status(400, ServerFixtures.burnBusy)]), exports: own)
         await model.open()
         model.start()
         #expect(await settle { model.phase == .failed(.server("已有导出/合成任务在进行, 请等它完成")) })
@@ -136,9 +141,10 @@ struct ExportModelTests {
     }
 
     @Test func aFileThatVanishesBeforeTheCopyIsExpired() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .ok(ServerFixtures.exportStarted),
-                                             .ok(ServerFixtures.stitchDone), .status(404, "gone")]))
+                                             .ok(ServerFixtures.stitchDone), .status(404, "gone")]), exports: own)
         await model.open()
         model.start()
         #expect(await settle { model.phase == .failed(.expired) })
@@ -147,9 +153,10 @@ struct ExportModelTests {
     }
 
     @Test func aStatusThatSaysTheJobIsGoneIsAFailureThatKeepsTheHandle() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .ok(ServerFixtures.exportStarted),
-                                             .status(404, ServerFixtures.stitchGone)]))
+                                             .status(404, ServerFixtures.stitchGone)]), exports: own)
         await model.open()
         model.start()
         #expect(await settle { model.phase.isFailed })
@@ -161,19 +168,21 @@ struct ExportModelTests {
     }
 
     @Test func aNetworkFailureIsNamed() async throws {
-        defer { Self.removeExports() }
-        let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .raises(URLError(.networkConnectionLost))]))
+        let own = OwnExports()
+        defer { own.remove() }
+        let model = model(StubTransport([.ok(ServerFixtures.fontPresent), .raises(URLError(.networkConnectionLost))]), exports: own)
         await model.open()
         model.start()
         #expect(await settle { model.phase == .failed(.network) })
     }
 
     @Test func theProgressIsSeenWhileTheServerWorks() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = StubTransport([.ok(ServerFixtures.fontPresent), .ok(ServerFixtures.exportStarted),
                                        .ok(ServerFixtures.stitchRunning(percent: 42)), .ok(ServerFixtures.stitchDone),
                                        .ok("MP4", headers: ["Content-Length": "3"])])
-        let model = model(transport)
+        let model = model(transport, exports: own)
         await model.open()
         model.start()
         #expect(await settle { model.phase == .generating(percent: 42) })
@@ -189,13 +198,14 @@ struct ExportModelTests {
     }
 
     @Test func aSecondTapWhileTheJobIsBeingAskedForStartsNothing() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = RoutingTransport()
         transport.route("/api/font", endless: .ok(ServerFixtures.fontPresent))
         transport.route("/api/export/burn", steps: [.held(.ok(ServerFixtures.exportStarted))])
         transport.route("/api/stitch/status", endless: .ok(ServerFixtures.stitchDone))
         transport.route("/api/export/burn/dl", endless: .ok("MP4", headers: ["Content-Length": "3"]))
-        let model = model(transport)
+        let model = model(transport, exports: own)
         await model.open()
         model.start()
         // Expected: the work counts as started from the first tap, so the button gives way at once.
@@ -229,9 +239,10 @@ struct ExportModelTests {
     }
 
     @Test func stoppingKeepsTheJobAndStartPicksItUp() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = runningJobTransport()
-        let model = model(transport)
+        let model = model(transport, exports: own)
         await started(model)
         model.stopWaiting()
         #expect(model.phase == .stoppedWaiting)
@@ -253,9 +264,10 @@ struct ExportModelTests {
     }
 
     @Test func reopeningALeftJobLooksAtItAndCarriesOn() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = runningJobTransport()
-        let model = model(transport)
+        let model = model(transport, exports: own)
         await started(model)
         model.stopWaiting()
         #expect(model.phase == .stoppedWaiting)
@@ -268,9 +280,10 @@ struct ExportModelTests {
     }
 
     @Test func reopeningALeftJobThatFailedAsksAboutTheFontInstead() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = runningJobTransport()
-        let model = model(transport)
+        let model = model(transport, exports: own)
         await started(model)
         model.stopWaiting()
         #expect(model.phase == .stoppedWaiting)
@@ -286,9 +299,10 @@ struct ExportModelTests {
     }
 
     @Test func discardingTheJobStartsANewOneNextTime() async throws {
-        defer { Self.removeExports() }
+        let own = OwnExports()
+        defer { own.remove() }
         let transport = runningJobTransport()
-        let model = model(transport)
+        let model = model(transport, exports: own)
         await started(model)
         model.stopWaiting()
         model.discardJob()
@@ -304,8 +318,9 @@ struct ExportModelTests {
     }
 
     @Test func stoppingBeforeAnythingWasStartedIsJustIdle() async throws {
-        defer { Self.removeExports() }
-        let model = model(StubTransport([.ok(ServerFixtures.fontPresent)]))
+        let own = OwnExports()
+        defer { own.remove() }
+        let model = model(StubTransport([.ok(ServerFixtures.fontPresent)]), exports: own)
         model.stopWaiting()
         #expect(model.phase == .idle)
         model.discardJob()
