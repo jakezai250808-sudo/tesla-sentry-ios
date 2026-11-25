@@ -502,11 +502,122 @@ struct AppModelTests {
         #expect(!model.listNeedsSignIn)
     }
 
+    /// The list offers the way to the Local Network permission when a server on the phone's own network
+    /// could not be got through to, by the codes the connect page reads (`TransportFailure`'s one
+    /// list; two of them are rows here, the whole list is held by
+    /// `localNetworkUnreachableReadsTheSameCodesAsConnectFailure` in `ServerHTTPTests`) and not only by
+    /// "no network", the one it read before. A server that is not on that network, or one that answered
+    /// (a status, a refused session), is no reason for it.
+    @Test(arguments: [
+        ("192.168.1.50:8080", StubTransport.Reply.raises(URLError(.networkConnectionLost)), true),
+        ("192.168.1.50:8080", .raises(URLError(.notConnectedToInternet)), true),
+        ("cam.example.com", .raises(URLError(.networkConnectionLost)), false),
+        ("cam.example.com", .raises(URLError(.notConnectedToInternet)), false),
+        ("192.168.1.50:8080", .status(503, "busy"), false),
+        ("192.168.1.50:8080", .unauthorized(), false),
+    ] as [(String, StubTransport.Reply, Bool)])
+    func theListMayNeedTheLocalNetworkPermissionOnlyWhenAServerOnThePhonesNetworkCouldNotBeReached(_ address: String, _ list: StubTransport.Reply, _ expected: Bool) async {
+        defer { registry.cleanUp() }
+        let transport = openServer()
+        transport.route("/api/events", endless: list)
+        let (model, _) = makeModel(transport)
+        model.addressText = address
+        model.connect()
+        #expect(await settle { model.loadState == .failed })
+        #expect(model.events.isEmpty)
+        #expect(model.listMayNeedLocalNetworkPermission == expected)
+    }
+
+    /// The banner over a list that is still on screen reads the refresh that did not work, and goes
+    /// with it once one does.
+    @Test func aListThatIsStillOnScreenMayNeedTheLocalNetworkPermissionUntilARefreshWorks() async {
+        defer { registry.cleanUp() }
+        let transport = openServer()
+        transport.route("/api/events", steps: [.now(.ok(Fixtures.eventsJSON)),
+                                               .now(.raises(URLError(.networkConnectionLost))),
+                                               .now(.ok(Fixtures.eventsJSON))])
+        let (model, _) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        await connect(model)
+        #expect(!model.listMayNeedLocalNetworkPermission)
+        await model.refresh()
+        #expect(model.loadState == .failed)
+        #expect(!model.events.isEmpty, "The list from before is still on screen")
+        #expect(model.listMayNeedLocalNetworkPermission)
+        await model.refresh()
+        #expect(model.lastFailure == nil)
+        #expect(!model.listMayNeedLocalNetworkPermission)
+    }
+
+    /// The usual way this is seen: the app comes back to its server at launch, and the phone does not
+    /// get through. Coming back asks for the list as any refresh does, so the empty list says so.
+    @Test func aListThatCouldNotBeLoadedOnComingBackToTheServerMayNeedTheLocalNetworkPermission() async throws {
+        defer { registry.cleanUp() }
+        let transport = openServer()
+        transport.route("/api/events", endless: .raises(URLError(.cannotConnectToHost)))
+        let store = makeStore()
+        let saved = ServerRecord(address: try ServerAddress.normalize("192.168.1.50:8080"), lastUsedAt: .distantPast)
+        store.save(saved)
+        store.setToken(Fixtures.token, for: saved.id)
+        store.lastServerID = saved.id
+        let model = AppModel(store: store, transport: transport)
+        model.restore()
+        #expect(await settle { model.loadState == .failed })
+        #expect(model.events.isEmpty)
+        #expect(model.lastFailure == .network(domain: NSURLErrorDomain, code: URLError.cannotConnectToHost.rawValue))
+        #expect(model.listMayNeedLocalNetworkPermission)
+        #expect(!model.listNeedsSignIn, "The server did not answer, so it refused nothing")
+    }
+
+    /// A server that refused the session, and then could not be asked for a new one. The list has no
+    /// answer from the server to show, only the sign-in that did not get through, so it reads that,
+    /// and the sign-in-again page is not the one opened.
+    @Test func aSessionThatCouldNotBeRenewedMayNeedTheLocalNetworkPermission() async {
+        defer { registry.cleanUp() }
+        let transport = gatedServer()
+        // The cookie is refused on the list, and the sign-in that follows does not get through.
+        transport.route("/api/events", steps: [.now(.unauthorized()), .now(.raises(URLError(.cannotConnectToHost)))])
+        transport.route("/login", steps: [.now(.loginOK(token: Self.newToken)), .now(.raises(URLError(.cannotConnectToHost)))])
+        let (model, _) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        model.passwordText = "s3cret"
+        model.connect()
+        #expect(await settle { model.loadState == .failed })
+        #expect(model.events.isEmpty)
+        #expect(model.lastFailure == .network(domain: NSURLErrorDomain, code: URLError.cannotConnectToHost.rawValue))
+        #expect(model.sessionExpired == false, "The server never said no to the password")
+        #expect(model.listMayNeedLocalNetworkPermission)
+        #expect(!model.listNeedsSignIn)
+        #expect(transport.sent(to: "/login").count == 2)
+        #expect(transport.sent(to: "/api/events").count == 1, "The list is not asked again after a sign-in that did not get through")
+    }
+
+    /// A list that is there has no failure to read, so nothing points at the permission.
+    @Test func aListThatLoadedDoesNotNeedTheLocalNetworkPermission() async {
+        defer { registry.cleanUp() }
+        let (model, _) = makeModel(openServer())
+        model.addressText = "192.168.1.50:8080"
+        await connect(model)
+        #expect(model.lastFailure == nil)
+        #expect(!model.listMayNeedLocalNetworkPermission)
+    }
+
+    /// The demo reaches no server, so it never does, whatever its own list does.
+    @Test func theDemoNeverNeedsTheLocalNetworkPermission() async {
+        defer { registry.cleanUp() }
+        let (model, _) = makeModel(RoutingTransport())
+        model.enterDemo()
+        #expect(!model.listMayNeedLocalNetworkPermission, "Nothing has been asked yet")
+        #expect(await settle { model.loadState.isLoaded })
+        #expect(model.currentRecord == nil)
+        #expect(!model.listMayNeedLocalNetworkPermission)
+    }
+
     /// What a failed attempt is explained by, for every failure and both forms, without a view.
     /// In English a key is shown as it is written, so the English line stands for its key.
     @Test(arguments: [
         (ConnectFailure.credentialsRejected, true, "Couldn't connect. Check the password and try again." as String?),
-        (.unreachable, true, "Couldn't connect. Check the password and try again."),
+        (.unreachable, true, "Couldn't connect. Try again."),
         (.server(status: 503), true, "Couldn't connect. Check the password and try again."),
         (.lockedOut, true, "Too many tries. Try again later."),
         (.credentialsRejected, false, "Couldn't connect. Check the address and password."),
@@ -517,7 +628,7 @@ struct AppModelTests {
         (.incompatibleServer, false, "This server is not compatible yet."),
         (.certificateRejected, true, "The server's certificate is not trusted. Check the address or the certificate."),
         (.certificateRejected, false, "The server's certificate is not trusted. Check the address or the certificate."),
-        (.localNetworkUnreachable, true, "Couldn't connect. Check the address and password."),
+        (.localNetworkUnreachable, true, "Couldn't connect. Try again."),
         (.localNetworkUnreachable, false, "Couldn't connect. Check the address and password."),
         (.cancelled, true, nil),
         (.cancelled, false, nil),
@@ -529,17 +640,20 @@ struct AppModelTests {
         #expect(line == expected.map { LocalizedStringKey($0) })
     }
 
+    /// Why signing in again did not work, as the sheet shows it: by what the server answered, and for
+    /// a request that did not get through at all, by where the server is.
     @Test(arguments: [
-        (StubTransport.Reply.status(401), ConnectFailure.credentialsRejected),
-        (.status(429, "try later"), .lockedOut),
-        (.raises(URLError(.cannotConnectToHost)), .unreachable),
-    ] as [(StubTransport.Reply, ConnectFailure)])
-    func whySigningInAgainDidNotWork(_ login: StubTransport.Reply, _ expected: ConnectFailure) async {
+        (StubTransport.Reply.status(401), "192.168.1.50:8080", ConnectFailure.credentialsRejected),
+        (.status(429, "try later"), "192.168.1.50:8080", .lockedOut),
+        (.raises(URLError(.cannotConnectToHost)), "192.168.1.50:8080", .localNetworkUnreachable),
+        (.raises(URLError(.cannotConnectToHost)), "cam.example.com", .unreachable),
+    ] as [(StubTransport.Reply, String, ConnectFailure)])
+    func whySigningInAgainDidNotWork(_ login: StubTransport.Reply, _ address: String, _ expected: ConnectFailure) async {
         defer { registry.cleanUp() }
         let transport = openServer()
         transport.route("/login", endless: login)
         let (model, _) = makeModel(transport)
-        model.addressText = "192.168.1.50:8080"
+        model.addressText = address
         await connect(model)
         #expect(await model.reconnect(password: "whatever") == expected)
     }

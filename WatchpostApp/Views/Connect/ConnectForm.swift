@@ -246,8 +246,9 @@ struct ConnectActionButton: View {
 struct ConnectFailureView: View {
     let failure: ConnectFailure
     var onEditAddress: (() -> Void)? = nil
-    /// The form above asks for the password only (the sign-in-again sheet). There is no address
-    /// on screen to check, so the general connection line names the password alone.
+    /// The form above asks for the password only (the sign-in-again sheet). The address is not on
+    /// screen, so no line names it, and a connection that never got through does not send the person
+    /// to check a password the server never saw either.
     var passwordOnly = false
 
     @Environment(\.openURL) private var openURL
@@ -293,13 +294,20 @@ struct ConnectFailureView: View {
     /// What a failed attempt is explained by, or nil when nothing is: a cancelled attempt is not
     /// a failure, and an address that was never sent is named under the field.
     ///
-    /// The server does not say which of the two it did not accept, and neither does the connection
-    /// line. Where only the password was asked for, the address is not something to check.
+    /// A connection that never got through, to a public or to a local address, does not make the
+    /// password the one to check, as the server never saw it: the line names the address and the
+    /// password, or, where only the password was asked for, neither and just "try again". A server
+    /// that answered and refused does not say which of the two it did not accept, so there the line
+    /// names them both, or the password alone.
     static func connectionFailureMessage(_ failure: ConnectFailure, passwordOnly: Bool) -> LocalizedStringKey? {
         switch failure {
         case .invalidAddress, .cancelled:
             return nil
-        case .unreachable, .server, .credentialsRejected:
+        case .unreachable, .localNetworkUnreachable:
+            return passwordOnly
+                ? LocalizedStringKey("Couldn't connect. Try again.")
+                : LocalizedStringKey("Couldn't connect. Check the address and password.")
+        case .server, .credentialsRejected:
             return passwordOnly
                 ? LocalizedStringKey("Couldn't connect. Check the password and try again.")
                 : LocalizedStringKey("Couldn't connect. Check the address and password.")
@@ -309,8 +317,6 @@ struct ConnectFailureView: View {
             return LocalizedStringKey("This server is not compatible yet.")
         case .certificateRejected:
             return LocalizedStringKey("The server's certificate is not trusted. Check the address or the certificate.")
-        case .localNetworkUnreachable:
-            return LocalizedStringKey("Couldn't connect. Check the address and password.")
         }
     }
 

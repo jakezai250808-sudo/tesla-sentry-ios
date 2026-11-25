@@ -188,17 +188,6 @@
         }
       }
     },
-    "Allow Local Network for Watchpost in Settings, then retry." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先在设置里允许岗哨访问本地网络，再重试。"
-          }
-        }
-      }
-    },
     "App Store transaction number" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -415,6 +404,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "连接失败，请检查密码后重试。"
+          }
+        }
+      }
+    },
+    "Couldn't connect. Try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接失败，请重试。"
           }
         }
       }

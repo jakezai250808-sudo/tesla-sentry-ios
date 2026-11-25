@@ -69,10 +69,18 @@ enum TransportFailure {
         if error is CancellationError || Task.isCancelled { return .cancelled }
         guard let urlError = error as? URLError else { return .unreachable }
         if certificateCodes.contains(urlError.code) { return .certificateRejected }
-        if unreachableCodes.contains(urlError.code) {
+        if couldNotGetThrough(urlError.code) {
             return ServerAddress.isLocal(base) ? .localNetworkUnreachable : .unreachable
         }
         return .unreachable
+    }
+
+    /// Whether a failed request reads as the phone not getting through to a server on its own network —
+    /// the local-network permission among the possible reasons. The same codes `connectFailure` reads,
+    /// on a local address.
+    static func localNetworkUnreachable(_ error: UpstreamError, base: URL) -> Bool {
+        guard case .network(let domain, let code) = error, domain == NSURLErrorDomain else { return false }
+        return couldNotGetThrough(URLError.Code(rawValue: code)) && ServerAddress.isLocal(base)
     }
 
     /// -1200 … -1206: the TLS handshake failed on a certificate. The numbers are the family; the names are for reading.
@@ -88,6 +96,11 @@ enum TransportFailure {
         .notConnectedToInternet, .timedOut, .resourceUnavailable, .dataNotAllowed,
         .cannotLoadFromNetwork, .httpTooManyRedirects, .internationalRoamingOff, .callIsActive,
     ]
+
+    /// The one question to ask of a `URLError` code, on the connect page and on the events list alike.
+    private static func couldNotGetThrough(_ code: URLError.Code) -> Bool {
+        unreachableCodes.contains(code)
+    }
 }
 
 // MARK: - Client

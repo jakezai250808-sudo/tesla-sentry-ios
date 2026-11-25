@@ -101,6 +101,48 @@ struct ServerHTTPTests {
         #expect(TransportFailure.connectFailure(Odd(), base: box) == .unreachable)
     }
 
+    /// `localNetworkUnreachable`, the rule the events list and the sign-in-again sheet read a failed
+    /// request by: a `URLError` code that means "could not get through", on a local address.
+    @Test func whetherAFailureReadsAsTheLocalNetworkDependsOnTheCodeAndOnWhereTheServerIs() {
+        let box = URL(string: "http://192.168.1.50:8080")!
+        let far = URL(string: "https://cam.example.com")!
+        func through(_ code: URLError.Code) -> UpstreamError { .network(domain: NSURLErrorDomain, code: code.rawValue) }
+        let refused = through(.cannotConnectToHost)
+        #expect(TransportFailure.localNetworkUnreachable(refused, base: box))
+        #expect(!TransportFailure.localNetworkUnreachable(refused, base: far))
+        // A connection lost on the way, and the one code the events list read before this rule.
+        #expect(TransportFailure.localNetworkUnreachable(through(.networkConnectionLost), base: box))
+        #expect(TransportFailure.localNetworkUnreachable(through(.notConnectedToInternet), base: box))
+        // A certificate the phone did not trust, and a request that was cancelled.
+        #expect(!TransportFailure.localNetworkUnreachable(through(.serverCertificateUntrusted), base: box))
+        #expect(!TransportFailure.localNetworkUnreachable(through(.cancelled), base: box))
+        // The same code under another domain.
+        #expect(!TransportFailure.localNetworkUnreachable(.network(domain: "com.watchpost.tests", code: URLError.Code.cannotConnectToHost.rawValue), base: box))
+        // An answer from the server, a body that made no sense, and a number that is no `URLError` code.
+        #expect(!TransportFailure.localNetworkUnreachable(.http(status: 503, message: "busy"), base: box))
+        #expect(!TransportFailure.localNetworkUnreachable(.unauthorized, base: box))
+        #expect(!TransportFailure.localNetworkUnreachable(.badResponse, base: box))
+        #expect(!TransportFailure.localNetworkUnreachable(.network(domain: NSURLErrorDomain, code: 1), base: box))
+    }
+
+    /// One list for both pages: whatever `connectFailure` calls a local-network failure on a local
+    /// address, `localNetworkUnreachable` reads as one, and nothing else.
+    @Test func localNetworkUnreachableReadsTheSameCodesAsConnectFailure() {
+        let box = URL(string: "http://192.168.1.50:8080")!
+        let codes: [URLError.Code] = [
+            .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost, .notConnectedToInternet, .timedOut,
+            .resourceUnavailable, .dataNotAllowed, .cannotLoadFromNetwork, .httpTooManyRedirects, .internationalRoamingOff, .callIsActive,
+            .secureConnectionFailed, .serverCertificateUntrusted, .serverCertificateHasBadDate, .serverCertificateHasUnknownRoot,
+            .serverCertificateNotYetValid, .clientCertificateRejected, .clientCertificateRequired,
+            .badServerResponse, .cancelled,
+        ]
+        for code in codes {
+            let failure = UpstreamError.network(domain: NSURLErrorDomain, code: code.rawValue)
+            #expect(TransportFailure.localNetworkUnreachable(failure, base: box)
+                    == (TransportFailure.connectFailure(URLError(code), base: box) == .localNetworkUnreachable), "code \(code.rawValue)")
+        }
+    }
+
     @Test func theConfigurationKeepsNothingAndWaitsForNothing() {
         let configuration = HTTPClient.makeConfiguration()
         #expect(configuration.httpCookieStorage == nil)

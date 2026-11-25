@@ -155,20 +155,33 @@ struct EventsScreen: View {
         .accessibilityIdentifier("events.presence")
     }
 
+    /// Over a list that is still on screen after a refresh that did not work. Its two lines are one
+    /// element for VoiceOver. When the phone may not have got through to a server on its own network,
+    /// the connect page's line and the way to Settings follow underneath, outside that element: a
+    /// button inside a combined one cannot be activated on its own.
     private var refreshBanner: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: "wifi.exclamationmark")
-                    .accessibilityHidden(true)
-                Text("Sync failed. Pull to retry")
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .accessibilityHidden(true)
+                    Text("Sync failed. Pull to retry")
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color.warning)
+                (Text("Last refreshed") + Text(" \(refreshTime)"))
+                    .font(.footnote)
+                    .foregroundStyle(Color.labelSecondary)
             }
-            .font(.subheadline)
-            .foregroundStyle(Color.warning)
-            (Text("Last refreshed") + Text(" \(refreshTime)"))
-                .font(.footnote)
-                .foregroundStyle(Color.labelSecondary)
+            .accessibilityElement(children: .combine)
+
+            if model.listMayNeedLocalNetworkPermission {
+                // The 4 above is for two tight lines; the help reads as its own block 8 under, as on
+                // the connect page.
+                localNetworkHelp(centered: false)
+                    .padding(.top, 4)
+            }
         }
-        .accessibilityElement(children: .combine)
         .accessibilityIdentifier("events.banner")
     }
 
@@ -325,23 +338,32 @@ struct EventsScreen: View {
             .buttonStyle(PrimaryButtonStyle())
             .frame(maxWidth: 280)
             .accessibilityIdentifier("events.retry")
-            if needsLocalNetworkPermission {
-                Text("Allow Local Network for Watchpost in Settings, then retry.")
-                    .font(.footnote)
-                    .foregroundStyle(Color.labelSecondary)
-                    .multilineTextAlignment(.center)
-                Button("Open Settings") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
-                }
-                .buttonStyle(PlainActionButtonStyle())
-                .accessibilityIdentifier("events.open-settings")
+            if model.listMayNeedLocalNetworkPermission {
+                localNetworkHelp(centered: true)
             }
         }
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier("events.empty")
+    }
+
+    /// The connect page's line for a phone that may not have got through to a server on its own
+    /// network, and the way to the setting it names: under the empty list that could not be loaded,
+    /// where all is centred and 12 apart, and leading under the banner, 8 apart as on the connect page.
+    private func localNetworkHelp(centered: Bool) -> some View {
+        VStack(alignment: centered ? .center : .leading, spacing: centered ? 12 : 8) {
+            Text("If the phone can't see the server, allow Local Network for Watchpost in Settings.", comment: "Help after the phone could not reach a server on its own network")
+                .font(.footnote)
+                .foregroundStyle(Color.labelSecondary)
+                .multilineTextAlignment(centered ? .center : .leading)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .buttonStyle(PlainActionButtonStyle())
+            .accessibilityIdentifier("events.open-settings")
+        }
     }
 
     private var loadFailureMessage: Text {
@@ -350,12 +372,6 @@ struct EventsScreen: View {
         } else {
             Text("Couldn't load events.")
         }
-    }
-
-    private var needsLocalNetworkPermission: Bool {
-        guard case .network(_, let code)? = model.lastFailure, code == -1009,
-              let record = model.currentRecord else { return false }
-        return ServerAddress.isLocal(record.address)
     }
 
     private var categoryEmpty: some View {

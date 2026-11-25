@@ -40,7 +40,9 @@ struct ReconnectSheet: View {
 
                     if let failure {
                         // This page asks for the password only, so its failure line does not send
-                        // the person to check an address that is not on screen.
+                        // the person to check an address that is not on screen, nor, when the phone
+                        // did not get through to a server on its own network, a password the server
+                        // never saw. That failure brings the connect page's line and the way to Settings.
                         ConnectFailureView(failure: failure, passwordOnly: true)
                             .padding(.top, 12)
                     }
@@ -99,17 +101,9 @@ struct ReconnectSheet: View {
         Task { @MainActor in
             let result = await model.reconnect(password: password)
             reconnecting = false
-
-            switch result {
-            case nil:
-                break
-            case .lockedOut:
-                failure = .lockedOut
-            case .credentialsRejected:
-                failure = .credentialsRejected
-            default:
-                failure = .unreachable
-            }
+            // Kept as the model named it, `.localNetworkUnreachable` among the rest: for that one the
+            // failure view below has the connect page's line and the way to Settings.
+            if let result { failure = result }
         }
     }
 }

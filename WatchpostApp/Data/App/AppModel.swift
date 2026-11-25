@@ -320,6 +320,16 @@ final class AppModel {
     /// when the sign-in-again sheet is cancelled while the refusal is still the reason.
     var listNeedsSignIn: Bool { loadState == .failed && lastFailure == .unauthorized }
 
+    /// Whether the phone may not have got through to a server on its own network, which is often the
+    /// local-network permission: then the events screen says so, hedged as the connect page does, and
+    /// offers the way to Settings, under an empty list and under the banner over one still on screen.
+    /// It reads the failure, as iOS reports a refused permission as an ordinary transport error. The
+    /// demo reaches no server, and with no failed request or no current server there is nothing to read.
+    var listMayNeedLocalNetworkPermission: Bool {
+        guard !isDemo, let lastFailure, let record = currentRecord else { return false }
+        return TransportFailure.localNetworkUnreachable(lastFailure, base: record.address)
+    }
+
     func refreshIfNeeded() async {
         switch loadState {
         case .idle: await refresh()
@@ -387,8 +397,13 @@ final class AppModel {
         filter.reason = nil
     }
 
-    /// Signs in again on the current server with the password typed in the sheet.
-    /// Returns why it did not work, or nil.
+    /// Signs in again on the current server with the password typed in the sheet. Returns nil once it
+    /// worked and the list has been asked for again, loaded or not; otherwise why it did not work:
+    /// `.credentialsRejected` when the server refused the password, `.lockedOut` when it stopped
+    /// taking tries, and `.localNetworkUnreachable` when the request did not get through to a server
+    /// on its own network (often the local-network permission), which has the sheet offer the way to
+    /// Settings. Anything else is `.unreachable`, as it is with no current server, when nothing was
+    /// asked at all.
     func reconnect(password: String) async -> ConnectFailure? {
         guard case .server(let id) = mode, let session = serverSessions[id] else { return .unreachable }
         do {
@@ -399,10 +414,15 @@ final class AppModel {
             await refresh()
             return nil
         } catch {
-            switch error as? UpstreamError {
+            guard let failure = error as? UpstreamError else { return .unreachable }
+            switch failure {
             case .unauthorized: return .credentialsRejected
             case .lockedOut: return .lockedOut
-            default: return .unreachable
+            default:
+                if TransportFailure.localNetworkUnreachable(failure, base: session.base) {
+                    return .localNetworkUnreachable
+                }
+                return .unreachable
             }
         }
     }
