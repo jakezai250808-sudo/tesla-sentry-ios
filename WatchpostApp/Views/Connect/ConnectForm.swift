@@ -255,27 +255,15 @@ struct ConnectFailureView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             switch failure {
-            case .invalidAddress, .cancelled:
-                EmptyView()
-
-            case .unreachable, .server, .credentialsRejected:
-                connectionFailureMessage
-
-            case .lockedOut:
-                failureMessage("Too many tries. Try again later.")
-
             case .incompatibleServer:
-                failureMessage("This server is not compatible yet.")
+                line
                 if let onEditAddress {
                     Button("Edit address", action: onEditAddress)
                         .buttonStyle(PlainActionButtonStyle())
                 }
 
-            case .certificateRejected:
-                failureMessage("The server's certificate is not trusted. Check the address or the certificate.")
-
             case .localNetworkUnreachable:
-                failureMessage("Couldn't connect. Check the address and password.")
+                line
                 Text("If the phone can't see the server, allow Local Network for Watchpost in Settings.", comment: "Help after a local-network connection failed")
                     .font(.footnote)
                     .foregroundStyle(Color.labelSecondary)
@@ -286,19 +274,43 @@ struct ConnectFailureView: View {
                     }
                 }
                 .buttonStyle(PlainActionButtonStyle())
+
+            default:
+                line
             }
         }
         .accessibilityIdentifier("connect.failure")
     }
 
-    /// The server does not say which of the two it did not accept, and neither does this line.
-    /// Where only the password was asked for, the address is not something to check.
+    /// The line, and nothing at all when there is none, so that a cancelled attempt takes no room.
     @ViewBuilder
-    private var connectionFailureMessage: some View {
-        if passwordOnly {
-            failureMessage("Couldn't connect. Check the password and try again.")
-        } else {
-            failureMessage("Couldn't connect. Check the address and password.")
+    private var line: some View {
+        if let key = Self.connectionFailureMessage(failure, passwordOnly: passwordOnly) {
+            failureMessage(key)
+        }
+    }
+
+    /// What a failed attempt is explained by, or nil when nothing is: a cancelled attempt is not
+    /// a failure, and an address that was never sent is named under the field.
+    ///
+    /// The server does not say which of the two it did not accept, and neither does the connection
+    /// line. Where only the password was asked for, the address is not something to check.
+    static func connectionFailureMessage(_ failure: ConnectFailure, passwordOnly: Bool) -> LocalizedStringKey? {
+        switch failure {
+        case .invalidAddress, .cancelled:
+            return nil
+        case .unreachable, .server, .credentialsRejected:
+            return passwordOnly
+                ? LocalizedStringKey("Couldn't connect. Check the password and try again.")
+                : LocalizedStringKey("Couldn't connect. Check the address and password.")
+        case .lockedOut:
+            return LocalizedStringKey("Too many tries. Try again later.")
+        case .incompatibleServer:
+            return LocalizedStringKey("This server is not compatible yet.")
+        case .certificateRejected:
+            return LocalizedStringKey("The server's certificate is not trusted. Check the address or the certificate.")
+        case .localNetworkUnreachable:
+            return LocalizedStringKey("Couldn't connect. Check the address and password.")
         }
     }
 

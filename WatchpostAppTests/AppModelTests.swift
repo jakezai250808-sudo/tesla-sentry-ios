@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import WatchpostApp
 
@@ -451,13 +452,14 @@ struct AppModelTests {
     }
 
     /// The events screen says why the list is missing by reading `lastFailure`, not
-    /// `sessionExpired`: closing the page clears the second, and the first has to stay.
+    /// `sessionExpired`, through `listNeedsSignIn`: closing the page clears the second, and the
+    /// first has to stay.
     @Test func cancellingTheSignInAgainPageKeepsTheRefusalAsTheReasonThereIsNoList() async {
         defer { registry.cleanUp() }
         let transport = gatedServer()
         // The cookie is refused on the list, and the saved password on the login that follows.
         transport.route("/api/events", endless: .unauthorized())
-        transport.route("/login", steps: [.now(.loginOK(token: Self.newToken)), .now(.status(401)), .now(.status(401))])
+        transport.route("/login", steps: [.now(.loginOK(token: Self.newToken)), .now(.status(401))])
         let (model, _) = makeModel(transport)
         model.addressText = "192.168.1.50:8080"
         model.passwordText = "s3cret"
@@ -466,15 +468,65 @@ struct AppModelTests {
         #expect(model.loadState == .failed)
         #expect(model.events.isEmpty)
         #expect(model.lastFailure == .unauthorized)
+        #expect(model.listNeedsSignIn)
+        #expect(transport.sent(to: "/login").count == 2)
+        #expect(transport.sent(to: "/api/events").count == 1)
         model.dismissSessionNotice()
         #expect(!model.sessionExpired)
         #expect(model.loadState == .failed)
         #expect(model.events.isEmpty)
         #expect(model.lastFailure == .unauthorized)
-        // Retry on that line asks again, the server refuses again, and the page comes back.
+        #expect(model.listNeedsSignIn)
+        // Retry on that line asks the list again. The saved password was refused, so it is not tried
+        // again: the server refuses, and the page comes back.
         await model.refresh()
         #expect(model.sessionExpired)
         #expect(model.lastFailure == .unauthorized)
+        #expect(model.listNeedsSignIn)
+        #expect(transport.sent(to: "/api/events").count == 2)
+        #expect(transport.sent(to: "/login").count == 2)
+    }
+
+    /// Only a refused session has the list ask for a sign-in: any other failure keeps the old line.
+    @Test func theListNeedsASignInOnlyWhenTheServerRefusedTheSession() async {
+        defer { registry.cleanUp() }
+        let transport = openServer()
+        transport.route("/api/events", endless: .raises(URLError(.cannotConnectToHost)))
+        let (model, _) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        model.connect()
+        #expect(await settle { model.loadState == .failed })
+        #expect(model.events.isEmpty)
+        #expect(model.lastFailure == .network(domain: NSURLErrorDomain, code: URLError.cannotConnectToHost.rawValue))
+        #expect(!model.sessionExpired)
+        #expect(!model.listNeedsSignIn)
+    }
+
+    /// What a failed attempt is explained by, for every failure and both forms, without a view.
+    /// In English a key is shown as it is written, so the English line stands for its key.
+    @Test(arguments: [
+        (ConnectFailure.credentialsRejected, true, "Couldn't connect. Check the password and try again." as String?),
+        (.unreachable, true, "Couldn't connect. Check the password and try again."),
+        (.server(status: 503), true, "Couldn't connect. Check the password and try again."),
+        (.lockedOut, true, "Too many tries. Try again later."),
+        (.credentialsRejected, false, "Couldn't connect. Check the address and password."),
+        (.unreachable, false, "Couldn't connect. Check the address and password."),
+        (.server(status: 503), false, "Couldn't connect. Check the address and password."),
+        (.lockedOut, false, "Too many tries. Try again later."),
+        (.incompatibleServer, true, "This server is not compatible yet."),
+        (.incompatibleServer, false, "This server is not compatible yet."),
+        (.certificateRejected, true, "The server's certificate is not trusted. Check the address or the certificate."),
+        (.certificateRejected, false, "The server's certificate is not trusted. Check the address or the certificate."),
+        (.localNetworkUnreachable, true, "Couldn't connect. Check the address and password."),
+        (.localNetworkUnreachable, false, "Couldn't connect. Check the address and password."),
+        (.cancelled, true, nil),
+        (.cancelled, false, nil),
+        (.invalidAddress(.empty), true, nil),
+        (.invalidAddress(.empty), false, nil),
+    ] as [(ConnectFailure, Bool, String?)])
+    func whatAConnectFailureSays(_ failure: ConnectFailure, _ passwordOnly: Bool, _ expected: String?) {
+        let line = ConnectFailureView.connectionFailureMessage(failure, passwordOnly: passwordOnly)
+        #expect(line == expected.map { LocalizedStringKey($0) })
     }
 
     @Test(arguments: [

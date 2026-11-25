@@ -315,6 +315,11 @@ final class AppModel {
 
     // MARK: The list
 
+    /// Why there is no list, when the server stopped accepting the session: the person can fix
+    /// that here. It is read off the failure and not off `sessionExpired`, which is cleared
+    /// when the sign-in-again sheet is cancelled while the refusal is still the reason.
+    var listNeedsSignIn: Bool { loadState == .failed && lastFailure == .unauthorized }
+
     func refreshIfNeeded() async {
         switch loadState {
         case .idle: await refresh()
