@@ -138,30 +138,36 @@ struct DemoClipSourceTests {
     }
 
     /// A build that lost the recording: the list still has it, and it fails as a clip that is gone fails.
-    /// Nothing drawn plays, shows or exports in its place.
+    /// Nothing drawn plays, shows or exports in its place, though a drawn clip's files are all there.
     @Test func withoutItsFilesTheRealRecordingFailsAndNothingStandsIn() async throws {
-        // A bundle with the demo's list and none of its media, as such a build would be.
+        // A bundle with the demo's list and one drawn clip's files, and not the recording.
         let folder = FileManager.default.temporaryDirectory
             .appendingPathComponent("DemoClipSourceTests.\(UUID().uuidString).bundle", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: folder) }
-        // The list goes straight into DemoAssets: only the app itself is searched inside its language
-        // folders there, a bundle opened by its address is not.
+        // The list goes straight into DemoAssets, where the source looks whatever the language. With the
+        // list only in an en folder, as the app ships it, this Chinese-language simulator found none.
         let assets = folder.appendingPathComponent("DemoAssets", isDirectory: true)
         try FileManager.default.createDirectory(at: assets, withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: try #require(Self.bundled("demo-events", "json")),
-                                         to: assets.appendingPathComponent("demo-events.json"))
+        for (name, ext) in [("demo-events", "json"), ("demo-front", "mp4"), ("demo-thumb-front", "png")] {
+            try FileManager.default.copyItem(at: try #require(Self.bundled(name, ext)),
+                                             to: assets.appendingPathComponent("\(name).\(ext)"))
+        }
         let info: [String: String] = ["CFBundleIdentifier": "watchpost.tests.made"]
         try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
             .write(to: folder.appendingPathComponent("Info.plist"))
-        let source = DemoClipSource(now: Self.now, bundle: try #require(Bundle(url: folder)))
+        let made = try #require(Bundle(url: folder))
+        let source = DemoClipSource(now: Self.now, bundle: made)
 
         let events = try await source.events()
-        // The drawn events fail too in such a bundle; what matters is that the list is the real one.
+        // The other drawn footage is missing in such a bundle; what matters is that the list is the real one.
         #expect(events.count == 10)
         let sample = try #require(events.first { $0.isRealSample })
         #expect(sample.realSampleSeconds == 20)
         #expect(sample.sizeBytes == 0)
         let video = try #require(sample.groups.first?.videos.first)
+        // The made bundle finds a drawn clip and its still, so a stand-in would have something to show.
+        #expect(made.url(forResource: "demo-front", withExtension: "mp4", subdirectory: "DemoAssets") != nil)
+        #expect(made.url(forResource: "demo-thumb-front", withExtension: "png", subdirectory: "DemoAssets") != nil)
         // No still: like a clip the demo does not know, it asks for a picture that is nowhere.
         let still = source.thumbnail(for: video, at: 0)
         #expect(still.url.path == "/dev/null")
