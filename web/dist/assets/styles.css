@@ -105,6 +105,8 @@ h2 {
 .requirements, .disclaimer, .policy-meta, .copyright { color: var(--muted); }
 .requirements { margin-block-end: 0.85rem; }
 .availability { margin-block-end: 0.85rem; font-weight: 650; }
+.app-store-badge { padding: 10px; }
+.app-store-badge img { display: block; block-size: 40px; inline-size: auto; }
 .disclaimer { margin-block-end: 0; }
 .site-footer { margin-block-start: 2rem; }
 .copyright { margin-block-end: 0.25rem; overflow-wrap: anywhere; }
