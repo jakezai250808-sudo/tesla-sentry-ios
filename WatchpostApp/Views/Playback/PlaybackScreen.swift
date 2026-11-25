@@ -215,12 +215,12 @@ struct PlaybackScreen: View {
             if let footageBadge {
                 VStack {
                     HStack {
-                        // The real recording carries a camera's name in each top corner of its own, so its tag
-                        // goes to the top right, clear of both; a drawn clip has no such name.
-                        if !event.isRealSample { Spacer() }
+                        // Over the real recording, the top right is the one corner its own camera names leave
+                        // free (each name sits at the top left of its picture); a drawn clip has no such
+                        // name, and its tag sits in the same corner.
+                        Spacer()
                         DemoBadge(kind: footageBadge)
                             .accessibilityIdentifier("playback.demo-footage")
-                        if event.isRealSample { Spacer() }
                     }
                     .padding(8)
                     Spacer()

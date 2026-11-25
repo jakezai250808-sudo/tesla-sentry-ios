@@ -58,7 +58,9 @@ struct DemoClipSourceTests {
     @Test func theDemoIsTenEventsNewestFirstOnWholeMinutes() async throws {
         let events = try await events()
         #expect(events.count == 10)
-        #expect(events.filter { $0.category == .sentry }.count == 5)
+        // The real recording is a sentry clip too, next to the five drawn ones.
+        #expect(events.filter { $0.category == .sentry }.count == 6)
+        #expect(events.filter { $0.category == .sentry && !$0.isRealSample }.count == 5)
         #expect(events.filter { $0.category == .saved }.count == 2)
         #expect(events.filter { $0.category == .recent }.count == 2)
         #expect(zip(events, events.dropFirst()).allSatisfy { $0.start > $1.start })
