@@ -1,0 +1,11 @@
+Tesla FSD Drive (5 min, 6 cameras)
+Publisher: cfahlgren1
+Source: https://huggingface.co/datasets/cfahlgren1/tesla-fsd-drive-5min
+Pinned revision: 0e7fe2686e1c74e172f3f164a2a8405d2e664b8d
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Legal code: CC-BY-4.0-legalcode.txt (included).
+Not affiliated with or endorsed by Tesla, Inc.
+Upstream processing: location/time metadata removed, recording car plate masked, other plates/faces blurred where detected. These masks and blurs are preserved.
+Watchpost changes: extracted shared-clock interval [5,25) seconds from clip_00; aligned six cameras using camera_frames.parquet frame_seq_no at 36 Hz with nearest-prior frame holds for missing captures; resized full views to 740x480, added camera labels and creator/license credit; composed using unchanged upstream _export_worker at 720p, 15 fps, two columns by three rows; corrected publisher credit in the existing footer after composition; silent H.264/yuv420p MP4 with faststart. No generated scenes or telemetry.
+Derived still: watchpost-real-six-camera-20s-still.jpg is one frame of this clip (at 10 seconds) scaled to 518x504 and padded to 672x504 with black side bars for the app's 4:3 thumbnail. No other change.

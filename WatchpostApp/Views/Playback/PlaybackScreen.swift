@@ -30,6 +30,21 @@ struct PlaybackScreen: View {
         self.event = event
     }
 
+    /// What the navigation bar calls the event: when it happened, or, for the real recording, what it is.
+    /// The recording has no date of its own, and the moment the demo gives it is only where it sits in the list.
+    private var title: Text {
+        if event.isRealSample {
+            return Text("Real recording sample", comment: "Title of the demo's real recording, which has no date of its own")
+        }
+        return Text(verbatim: Display.shortStamp(playback?.event.start ?? event.start))
+    }
+
+    /// The tag over the picture while the demo shows it: which kind of demo footage this is.
+    private var footageBadge: DemoBadge.Kind? {
+        guard model.isDemo else { return nil }
+        return event.isRealSample ? .realClip : .footage
+    }
+
     var body: some View {
         Group {
             if let playback {
@@ -44,7 +59,7 @@ struct PlaybackScreen: View {
             }
         }
         .background(Color.canvas)
-        .navigationTitle(Display.shortStamp(playback?.event.start ?? event.start))
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -94,7 +109,7 @@ struct PlaybackScreen: View {
         }
         .fullScreenCover(isPresented: $showFullScreen) {
             if let playback {
-                FullScreenPlayerView(player: playback.player, isDemo: model.isDemo) {
+                FullScreenPlayerView(player: playback.player, badge: footageBadge) {
                     showFullScreen = false
                 }
                 // Edge to edge: otherwise the screen's own background shows above and below the player.
@@ -107,9 +122,7 @@ struct PlaybackScreen: View {
     private func demoRow(camera: Camera) -> some View {
         HStack(spacing: 8) {
             DemoBadge(kind: .data)
-            (Text("Demo footage", comment: "The picture is sample footage")
-                + Text(" · ", comment: "Separator between demo footage and the camera name")
-                + Text(camera.title))
+            demoWords(camera: camera)
                 .font(.footnote)
                 .foregroundStyle(Color.labelSecondary)
         }
@@ -119,6 +132,26 @@ struct PlaybackScreen: View {
         .background(Color.canvas)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("playback.demo-badge")
+    }
+
+    /// What the row says after the badge: the footage's kind, and the camera when there is one to name.
+    private func demoWords(camera: Camera) -> Text {
+        if event.isRealSample {
+            return Text("Real recording sample", comment: "The picture is the demo's real recording")
+        }
+        return Text("Demo footage", comment: "The picture is sample footage")
+            + Text(" · ", comment: "Separator between demo footage and the camera name")
+            + Text(camera.title)
+    }
+
+    /// What VoiceOver calls the picture.
+    private func videoLabel(_ playback: PlaybackModel) -> Text {
+        if event.isRealSample {
+            return Text("Real recording sample with six cameras in one picture",
+                        comment: "VoiceOver name of the demo's real recording video")
+        }
+        return Text(playback.camera.title)
+            + Text(" picture", comment: "Appended to a camera name in the video's VoiceOver label")
     }
 
     private func playbackScreen(_ playback: PlaybackModel) -> some View {
@@ -175,17 +208,19 @@ struct PlaybackScreen: View {
                 }
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text(playback.camera.title)
-                                + Text(" picture", comment: "Appended to a camera name in the video's VoiceOver label"))
+            .accessibilityLabel(videoLabel(playback))
             .accessibilityAddTraits(canPlay ? .isButton : [])
             .accessibilityHidden(playback.problem != nil || playback.video == nil)
 
-            if model.isDemo {
+            if let footageBadge {
                 VStack {
                     HStack {
-                        DemoBadge(kind: .footage)
+                        // The real recording carries a camera's name in each top corner of its own, so its tag
+                        // goes to the top right, clear of both; a drawn clip has no such name.
+                        if !event.isRealSample { Spacer() }
+                        DemoBadge(kind: footageBadge)
                             .accessibilityIdentifier("playback.demo-footage")
-                        Spacer()
+                        if event.isRealSample { Spacer() }
                     }
                     .padding(8)
                     Spacer()
@@ -243,8 +278,10 @@ struct PlaybackScreen: View {
     @ViewBuilder
     private func problemView(_ playback: PlaybackModel, problem: PlaybackProblem) -> some View {
         VStack(spacing: 12) {
-            if problem == .removed {
-                Text("This clip is no longer available", comment: "The recording was removed since the list loaded")
+            // The real recording has nothing in its place: when its file is missing or cannot be read,
+            // the only way on is back, as for a clip the server no longer has.
+            if problem == .removed || event.isRealSample {
+                missingWords
                     .font(.footnote)
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
@@ -288,6 +325,14 @@ struct PlaybackScreen: View {
         .padding(Metrics.side)
     }
 
+    /// Why nothing is shown, when the clip is gone.
+    private var missingWords: Text {
+        event.isRealSample
+            ? Text("The real recording sample can't be played in this build.",
+                  comment: "The demo's real recording is not in the app or cannot be read")
+            : Text("This clip is no longer available", comment: "The recording was removed since the list loaded")
+    }
+
     private func controls(_ playback: PlaybackModel) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             timeline(playback)
@@ -299,14 +344,25 @@ struct PlaybackScreen: View {
             clipSwitcher(playback)
                 .padding(.top, 8)
 
-            CameraSwitcher(cameras: playback.eventCameras, selected: playback.camera,
-                           available: Set(playback.groupCameras)) { camera in
-                playback.select(camera)
-            }
-            .padding(.top, 8)
-
-            qualityMenu(playback)
+            if event.isRealSample {
+                // All six cameras are already in the one picture: there is no other camera to switch to.
+                Text("Six cameras in one picture, composed beforehand. They can't be switched separately.",
+                     comment: "Why the demo's real recording has no camera switcher")
+                    .font(.footnote)
+                    .foregroundStyle(Color.labelSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+                    .accessibilityIdentifier("playback.precomposed")
+            } else {
+                CameraSwitcher(cameras: playback.eventCameras, selected: playback.camera,
+                               available: Set(playback.groupCameras)) { camera in
+                    playback.select(camera)
+                }
                 .padding(.top, 8)
+
+                qualityMenu(playback)
+                    .padding(.top, 8)
+            }
 
             if let notice = qualityNotice(playback) {
                 Text(verbatim: notice)
@@ -328,8 +384,14 @@ struct PlaybackScreen: View {
                     .accessibilityIdentifier("playback.stand-in")
             }
 
-            metadata(playback)
-                .padding(.top, Metrics.groupSpacing)
+            if let seconds = event.realSampleSeconds {
+                // No reason, place or time to show: the recording has none, and the credit says whose it is.
+                sampleCredit(seconds)
+                    .padding(.top, Metrics.groupSpacing)
+            } else {
+                metadata(playback)
+                    .padding(.top, Metrics.groupSpacing)
+            }
 
             TelemetryPanel(telemetry: playback.telemetry, sample: playback.sample) {
                 playback.retryTelemetry()
@@ -630,7 +692,35 @@ struct PlaybackScreen: View {
         }
     }
 
+    /// What the real recording is and whose it is. The clip itself carries the credit too, in its last row.
+    private func sampleCredit(_ seconds: Int) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(verbatim: Display.sampleSummary(seconds))
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.labelPrimary)
+                .accessibilityIdentifier("playback.sample")
+
+            CreditLink(words: Text("Footage: Tesla FSD Drive (5 min, 6 cameras) by cfahlgren1",
+                                   comment: "Credit for the demo's real recording: the data set's name and its publisher"),
+                       page: DemoClipSource.RealSample.source)
+                .accessibilityIdentifier("playback.sample.source")
+
+            CreditLink(words: Text("Creative Commons Attribution 4.0 International license (CC BY 4.0)",
+                                   comment: "Link to the licence of the demo's real recording; it opens in Safari"),
+                       page: DemoClipSource.RealSample.license)
+                .accessibilityIdentifier("playback.sample.license")
+
+            Text("Edited by Watchpost: shortened, and the six cameras composed into one picture.",
+                 comment: "What was changed from the original recording")
+                .font(.footnote)
+                .foregroundStyle(Color.labelSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private func clipLabel(_ playback: PlaybackModel) -> String {
+        // The real recording is named by how long it is: the demo's clock has nothing to do with it.
+        if let seconds = event.realSampleSeconds { return Display.sampleLength(seconds) }
         guard let group = playback.group else { return Display.missing }
         if playback.duration > 0 {
             return Display.span(from: group.start, to: group.start.addingTimeInterval(playback.duration))
@@ -680,13 +770,33 @@ private struct OverlayTextButtonStyle: ButtonStyle {
     }
 }
 
+/// One line of the credit under the real recording: it opens the recording's page in Safari.
+private struct CreditLink: View {
+    let words: Text
+    let page: URL
+
+    var body: some View {
+        Button {
+            UIApplication.shared.open(page)
+        } label: {
+            words
+                .font(.footnote)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(PlainActionButtonStyle())
+    }
+}
+
 private struct FullScreenPlayerView: UIViewControllerRepresentable {
     let player: AVPlayer
-    let isDemo: Bool
+    /// The tag over the picture while the demo shows it.
+    let badge: DemoBadge.Kind?
     let onClose: () -> Void
 
     func makeUIViewController(context: Context) -> FullScreenPlayerViewController {
-        FullScreenPlayerViewController(player: player, isDemo: isDemo, onClose: onClose)
+        FullScreenPlayerViewController(player: player, badge: badge, onClose: onClose)
     }
 
     func updateUIViewController(_ controller: FullScreenPlayerViewController, context: Context) {
@@ -696,11 +806,12 @@ private struct FullScreenPlayerView: UIViewControllerRepresentable {
 
 final class FullScreenPlayerViewController: UIViewController {
     private let playerController = AVPlayerViewController()
-    private let isDemo: Bool
+    /// The tag over the picture while the demo shows it.
+    private let badge: DemoBadge.Kind?
     private var onClose: () -> Void
 
-    init(player: AVPlayer, isDemo: Bool, onClose: @escaping () -> Void) {
-        self.isDemo = isDemo
+    init(player: AVPlayer, badge: DemoBadge.Kind?, onClose: @escaping () -> Void) {
+        self.badge = badge
         self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
         playerController.player = player
@@ -752,8 +863,8 @@ final class FullScreenPlayerViewController: UIViewController {
             button.heightAnchor.constraint(equalToConstant: 44)
         ])
 
-        if isDemo {
-            let demo = UIHostingController(rootView: FullScreenDemoBadge())
+        if let badge {
+            let demo = UIHostingController(rootView: FullScreenDemoBadge(badge: badge))
             demo.view.backgroundColor = .clear
             demo.view.isUserInteractionEnabled = false
             addChild(demo)
@@ -780,8 +891,11 @@ final class FullScreenPlayerViewController: UIViewController {
 }
 
 private struct FullScreenDemoBadge: View {
+    /// Which kind of demo footage is on screen.
+    let badge: DemoBadge.Kind
+
     var body: some View {
-        DemoBadge(kind: .footage)
+        DemoBadge(kind: badge)
             .accessibilityIdentifier("playback.fullscreen.demo-badge")
     }
 }

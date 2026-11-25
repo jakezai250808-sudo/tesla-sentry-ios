@@ -612,7 +612,10 @@ struct AppModelTests {
         #expect(model.isDemo)
         #expect(model.source?.identity == .demo)
         #expect(await settle { model.loadState.isLoaded })
-        #expect(model.events.count == 9)
+        #expect(model.events.count == 10)
+        // The first of them is the real recording; the rest are the demo's drawn events.
+        #expect(model.events.first?.isRealSample == true)
+        #expect(model.events.filter(\.isRealSample).count == 1)
         #expect(model.events.allSatisfy { $0.category == .sentry || $0.category == .saved || $0.category == .recent })
         #expect(model.serverIsOnline == true)
         #expect(model.status != nil)

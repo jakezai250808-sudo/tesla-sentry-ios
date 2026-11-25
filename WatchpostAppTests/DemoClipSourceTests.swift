@@ -55,22 +55,126 @@ struct DemoClipSourceTests {
 
     // MARK: The list
 
-    @Test func theDemoIsNineEventsNewestFirstOnWholeMinutes() async throws {
+    @Test func theDemoIsTenEventsNewestFirstOnWholeMinutes() async throws {
         let events = try await events()
-        #expect(events.count == 9)
+        #expect(events.count == 10)
         #expect(events.filter { $0.category == .sentry }.count == 5)
         #expect(events.filter { $0.category == .saved }.count == 2)
         #expect(events.filter { $0.category == .recent }.count == 2)
         #expect(zip(events, events.dropFirst()).allSatisfy { $0.start > $1.start })
         // Like a real event, the first minute starts on a whole minute.
         #expect(events.allSatisfy { $0.start.timeIntervalSince1970.truncatingRemainder(dividingBy: 60) == 0 })
-        // Something from today: the newest event is six minutes old, the oldest a little over five days.
+        // Something from today: the newest event is three minutes old, the oldest a little over five days.
         let first = try #require(events.first)
         let last = try #require(events.last)
-        #expect(first.id == "SentryClips/\(Self.stamp(Self.start(minutesAgo: 6)))")
+        #expect(first.id == "SentryClips/\(Self.stamp(Self.start(minutesAgo: 3)))")
         #expect(Self.now.timeIntervalSince(first.start) < 24 * 3600)
         #expect(Self.now.timeIntervalSince(last.start) > 5 * 24 * 3600)
         #expect(last.id == "SentryClips/\(Self.stamp(Self.start(minutesAgo: 7247)))")
+    }
+
+    // MARK: The real recording
+
+    /// The one event that is not drawn: the real file, and nothing made up about it. Its moment is only
+    /// where it sits in the list, so no screen shows that moment as when it was recorded.
+    @Test func theRealRecordingIsOneEventThatInventsNothing() async throws {
+        let events = try await events()
+        let samples = events.filter(\.isRealSample)
+        #expect(samples.count == 1)
+        #expect(events.filter { !$0.isRealSample }.allSatisfy { $0.realSampleSeconds == nil })
+        let sample = try #require(samples.first)
+        #expect(events.first == sample)
+        #expect(sample.id == "SentryClips/\(Self.stamp(Self.start(minutesAgo: 3)))")
+        // No reason, no place and no time of its own.
+        #expect(sample.meta == EventMeta.empty)
+        #expect(sample.isLocked == nil)
+        #expect(sample.realSampleSeconds == 20)
+        // One file for the whole event, under its own name, weighing what the shipped file weighs.
+        #expect(sample.groups.count == 1)
+        #expect(sample.groups.first?.start == sample.start)
+        let video = try #require(sample.groups.first?.videos.first)
+        #expect(sample.groups.first?.videos.count == 1)
+        #expect(video.file == "watchpost-real-six-camera-20s.mp4")
+        #expect(video.duration == 20)
+        #expect(video.path == "/media/SentryClips/\(sample.name)/watchpost-real-six-camera-20s.mp4")
+        #expect(!video.file.hasPrefix("demo-"), "The media generator removes what starts with demo-")
+        let shipped = try #require(Self.bundled(DemoClipSource.RealSample.clip, "mp4"))
+        let size = Int64(try #require(shipped.resourceValues(forKeys: [.fileSizeKey]).fileSize))
+        #expect(size == 4_195_326)
+        #expect(sample.sizeBytes == size)
+    }
+
+    @Test func theRealRecordingsStillPlaybackAndExportAreItsOwnFile() async throws {
+        let source = source()
+        let sample = try #require(try await source.events().first { $0.isRealSample })
+        let video = try #require(sample.groups.first?.videos.first)
+        let shipped = try #require(Self.bundled(DemoClipSource.RealSample.clip, "mp4"))
+        // The still is a frame of the clip itself, whichever moment is asked for.
+        let still = source.thumbnail(for: video, at: 0)
+        #expect(still.url.lastPathComponent == "watchpost-real-six-camera-20s-still.jpg")
+        #expect(source.thumbnail(for: video, at: 17).url == still.url)
+        #expect(try await source.imageData(for: still).starts(with: [0xFF, 0xD8]), "A JPEG")
+        // Every quality is the one file: there is no other picture to show in its place.
+        for quality in Quality.allCases {
+            let plan = try await source.playbackPlan(for: video, quality: quality)
+            #expect(plan.initial.url == shipped)
+            #expect(plan.initial.quality == quality)
+            #expect(await Fixtures.upgrades(of: plan) == [])
+        }
+        // A drive like the others, but one nothing was recorded for: no telemetry is made up for it.
+        #expect(try await source.telemetry(for: video) == .none)
+        // An export hands over that very file, under its own name.
+        let handle = try await source.startExport(event: sample, video: video, quality: .hd480)
+        defer { removeExport(named: handle.fileName) }
+        #expect(handle.id.hasPrefix("demo-"))
+        #expect(handle.eventID == sample.id)
+        #expect(handle.fileName == "watchpost-real-six-camera-20s.mp4")
+        #expect(try await source.exportJob(handle).state == .running)
+        let file = try await source.downloadExport(handle) { _ in }
+        defer { try? FileManager.default.removeItem(at: file) }
+        #expect(try Data(contentsOf: file) == Data(contentsOf: shipped))
+    }
+
+    /// A build that lost the recording: the list still has it, and it fails as a clip that is gone fails.
+    /// Nothing drawn plays, shows or exports in its place.
+    @Test func withoutItsFilesTheRealRecordingFailsAndNothingStandsIn() async throws {
+        // A bundle with the demo's list and none of its media, as such a build would be.
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("DemoClipSourceTests.\(UUID().uuidString).bundle", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let assets = folder.appendingPathComponent("DemoAssets/en.lproj", isDirectory: true)
+        try FileManager.default.createDirectory(at: assets, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: try #require(Self.bundled("demo-events", "json")),
+                                         to: assets.appendingPathComponent("demo-events.json"))
+        let info = ["CFBundleIdentifier": "watchpost.tests.made", "CFBundleDevelopmentRegion": "en",
+                    "CFBundleLocalizations": ["en"]]
+        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+            .write(to: folder.appendingPathComponent("Info.plist"))
+        let source = DemoClipSource(now: Self.now, bundle: try #require(Bundle(url: folder)))
+
+        let events = try await source.events()
+        // The drawn events fail too in such a bundle; what matters is that the list is the real one.
+        #expect(events.count == 10)
+        let sample = try #require(events.first { $0.isRealSample })
+        #expect(sample.realSampleSeconds == 20)
+        #expect(sample.sizeBytes == 0)
+        let video = try #require(sample.groups.first?.videos.first)
+        // No still: like a clip the demo does not know, it asks for a picture that is nowhere.
+        let still = source.thumbnail(for: video, at: 0)
+        #expect(still.url.path == "/dev/null")
+        await #expect(throws: UpstreamError.http(status: 404, message: nil)) { try await source.imageData(for: still) }
+        for quality in Quality.allCases {
+            await #expect(throws: UpstreamError.http(status: 404, message: nil)) {
+                _ = try await source.playbackPlan(for: video, quality: quality)
+            }
+        }
+        // Nothing to export: no job starts, one from before is over, and nothing downloads.
+        await #expect(throws: ExportFailure.server("")) {
+            _ = try await source.startExport(event: sample, video: video, quality: .hd480)
+        }
+        let handle = DemoClipSource.handle(event: sample, video: video, quality: .hd480, id: "demo-1")
+        #expect(try await source.exportJob(handle).state == .error)
+        await #expect(throws: ExportFailure.expired) { _ = try await source.downloadExport(handle) { _ in } }
     }
 
     @Test func anEventWithTwoGroupsSpansTwoMinutes() async throws {
@@ -112,7 +216,7 @@ struct DemoClipSourceTests {
             #expect(row["city"]?.string == city)
             #expect(row["street"]?.string == (row["footage"]?.string == "parked" ? parkedStreet : driveStreet))
         }
-        // Eight of the nine events have a place; the ninth is a car that wrote none.
+        // Eight events have a place: the real recording has none, and so does one of the drawn ones.
         #expect(placed == 8)
         if english {
             // An English name is written in English letters.
@@ -165,9 +269,10 @@ struct DemoClipSourceTests {
         #expect(recent.isLocked == nil)
     }
 
-    @Test func everyClipIsTwelveSecondsAndWeighsWhatTheFileWeighs() async throws {
+    @Test func everyDrawnClipIsTwelveSecondsAndWeighsWhatTheFileWeighs() async throws {
         let events = try await events()
-        let videos = events.flatMap(\.groups).flatMap(\.videos)
+        // The real recording is twenty seconds long; every drawn clip is twelve.
+        let videos = events.filter { !$0.isRealSample }.flatMap(\.groups).flatMap(\.videos)
         #expect(!videos.isEmpty)
         #expect(videos.allSatisfy { $0.duration == 12 })
         let parked = try event(.sentry, minutesAgo: 6, in: events)

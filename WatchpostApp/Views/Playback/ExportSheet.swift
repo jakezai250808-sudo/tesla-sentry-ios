@@ -16,8 +16,14 @@ struct ExportSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if model.isDemo {
-                        DemoBadge(kind: .data)
-                            .accessibilityIdentifier("export.demo-badge")
+                        HStack(spacing: 8) {
+                            DemoBadge(kind: .data)
+                                .accessibilityIdentifier("export.demo-badge")
+                            // What goes out here is the real recording itself, not a demo minute with a watermark.
+                            if export.event.isRealSample {
+                                DemoBadge(kind: .realClip)
+                            }
+                        }
                     }
 
                     context
@@ -74,19 +80,31 @@ struct ExportSheet: View {
 
     private var context: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 0) {
-                Text(export.video.camera.title)
-                Text(" · ", comment: "Separator between camera, clip and quality")
+            if export.event.isRealSample {
+                // No camera and no quality to name: the file goes out as it ships.
                 Text(verbatim: clip)
-                Text(" · ", comment: "Separator between camera, clip and quality")
-                Text(verbatim: export.quality.title)
-            }
-            .font(.subheadline)
-            .foregroundStyle(Color.labelPrimary)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.labelPrimary)
 
-            Text("One minute, one camera, with a watermark.", comment: "Explains the fixed scope of an export")
-                .font(.footnote)
-                .foregroundStyle(Color.labelSecondary)
+                Text("The real recording as it is in the app, credit included. Nothing is added.",
+                     comment: "Explains the fixed scope of an export of the demo's real recording")
+                    .font(.footnote)
+                    .foregroundStyle(Color.labelSecondary)
+            } else {
+                HStack(spacing: 0) {
+                    Text(export.video.camera.title)
+                    Text(" · ", comment: "Separator between camera, clip and quality")
+                    Text(verbatim: clip)
+                    Text(" · ", comment: "Separator between camera, clip and quality")
+                    Text(verbatim: export.quality.title)
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color.labelPrimary)
+
+                Text("One minute, one camera, with a watermark.", comment: "Explains the fixed scope of an export")
+                    .font(.footnote)
+                    .foregroundStyle(Color.labelSecondary)
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("export.context")

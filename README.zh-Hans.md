@@ -10,7 +10,7 @@ English: [README.md](README.md).
 - **事件**按天分组，可按分类、日期和原因筛选，并显示服务器的存储概况。
 - **回放**每一段一分钟的片段，可切换镜头：前视、后视、左B柱、右B柱、左前翼、右前翼，事件里录了哪几路就显示哪几路（只有四路的车显示四路）。播放暂停、前后跳十秒、带触发标记的进度条、全屏。车速、挡位、刹车、油门、方向盘角度和转向灯跟着进度走。录像里没有的值显示为“—”，不填假零。
 - **导出并分享**：单分钟、单路画面，带服务器烧进去的水印，清晰度由你选。做好的文件通过系统分享面板发出去。
-- **演示模式**：样例画面全部由代码生成。屏幕上一直有“演示数据”标识，样例事件不会被当成真实事件。
+- **演示模式**：样例画面全部由代码生成，另有一段真实录像：取自公开数据集的一段二十秒行驶录像，六路摄像头已预先合成在一幅画面里，屏上标注“真实画面”并注明来源，不能切换镜头。屏幕上一直有“演示数据”标识，样例事件不会被当成真实事件。
 
 ## 镜头名称
 
@@ -59,7 +59,7 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
 | --- | --- |
 | `WatchpostApp/Data` | 模型、服务器回复的解析、服务器会话、导出与回放逻辑 |
 | `WatchpostApp/Views` | 三个界面：连接、事件、回放 |
-| `WatchpostApp/DemoAssets` | 演示模式用的样例画面、缩略图和遥测；导出样例和地名按语言各一份 |
+| `WatchpostApp/DemoAssets` | 演示模式用的样例画面、缩略图和遥测；导出样例和地名按语言各一份；真实录像 `watchpost-real-six-camera-20s*` 及 `ATTRIBUTION.txt` |
 | `WatchpostAppTests` | 单元测试，含一个按真实服务器方式应答的回环服务器 |
 | `Tools` | 文案、演示素材生成器、本机服务器小工具。见 [Tools/README.md](Tools/README.md) |
 
@@ -68,5 +68,7 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
 ## 许可
 
 MIT，见 [LICENSE](LICENSE)。tesla-sentry-f50 是 baicyber 的独立项目，同样是 MIT。
+
+演示里那一段真实录像来自 cfahlgren1 的 *Tesla FSD Drive (5 min, 6 cameras)*，采用知识共享署名 4.0 国际许可协议（CC BY 4.0）。岗哨将它剪短，把六路摄像头画面各标上名称后合成为一幅，并加上署名。演示界面上注明了来源，完整署名见 `WatchpostApp/DemoAssets/ATTRIBUTION.txt`，许可协议全文随附在旁。演示里的其余内容全部由代码生成。
 
 岗哨是个人爱好项目，与 Tesla, Inc. 没有关联。“Tesla”和“Tesla Sentry”是 Tesla, Inc. 的商标。

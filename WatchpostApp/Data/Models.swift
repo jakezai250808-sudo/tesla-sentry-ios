@@ -227,6 +227,12 @@ struct RecordedEvent: Hashable, Codable, Sendable, Identifiable {
     let groups: [ClipGroup]
     let sizeBytes: Int64
     let isLocked: Bool?
+    /// Set only by `DemoClipSource`, for the one real recording that ships with the demo.
+    /// A server never sets it, and it is never encoded: it is true only of an event the demo made.
+    var isRealSample = false
+
+    /// `isRealSample` is left out, so a server's event, which has no such field, still decodes.
+    private enum CodingKeys: String, CodingKey { case category, name, meta, groups, sizeBytes, isLocked }
 
     var id: String { "\(category.rawValue)/\(name)" }
 
@@ -238,6 +244,12 @@ struct RecordedEvent: Hashable, Codable, Sendable, Identifiable {
             return last.start.addingTimeInterval(duration)
         }
         return last.start
+    }
+
+    /// How long the real recording sample is, as its source says; nil for every other event.
+    var realSampleSeconds: Int? {
+        guard isRealSample, let duration = groups.first?.videos.first?.duration else { return nil }
+        return Int(duration.rounded())
     }
 
     /// Every camera that has footage somewhere in this event, in switcher order.

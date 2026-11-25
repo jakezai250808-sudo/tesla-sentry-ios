@@ -20,8 +20,10 @@ driving telemetry, and exports watermarked clips to share.
   not contain is shown as “—”, never as a made-up zero.
 - **Export and share**: one minute, one camera, with the watermark the server burns in, in the
   quality you pick. The finished file goes out through the system share sheet.
-- **Demo mode** with sample footage drawn entirely from code. A “Demo data” badge stays on
-  screen so sample events are never mistaken for real ones.
+- **Demo mode** with sample footage drawn entirely from code, plus one real recording: twenty
+  seconds of a drive from a public data set, its six cameras already composed into one picture. It
+  is marked “Real clip” and credited on screen, and cannot be switched between cameras. A “Demo
+  data” badge stays on screen so sample events are never mistaken for real ones.
 
 ## Camera names
 
@@ -99,7 +101,7 @@ not in others, and never for a tip already finished, so that is left to a real d
 | --- | --- |
 | `WatchpostApp/Data` | Models, decoding of the server's replies, the server session, export and playback logic |
 | `WatchpostApp/Views` | The three screens: connect, events, playback |
-| `WatchpostApp/DemoAssets` | Sample footage, thumbnails and telemetry for the demo mode; the export samples and place names once per language |
+| `WatchpostApp/DemoAssets` | Sample footage, thumbnails and telemetry for the demo mode; the export samples and place names once per language; the real recording `watchpost-real-six-camera-20s*` with `ATTRIBUTION.txt` |
 | `WatchpostAppTests` | Unit tests, including a loopback server that answers like the real one |
 | `Tools` | Strings, demo-media generator and a local server helper. See [Tools/README.md](Tools/README.md) |
 
@@ -110,6 +112,12 @@ to regenerate the catalogs and audit the keys.
 ## License
 
 MIT. See [LICENSE](LICENSE). tesla-sentry-f50 is a separate project by baicyber, also under MIT.
+
+The demo's one real recording comes from *Tesla FSD Drive (5 min, 6 cameras)* by cfahlgren1, under
+the Creative Commons Attribution 4.0 International license (CC BY 4.0). Watchpost shortened it, put its
+six cameras, each with its name, into one picture and added the credit. The credit is on screen in the
+demo and in `WatchpostApp/DemoAssets/ATTRIBUTION.txt`, and the licence's legal code ships beside it.
+Everything else in the demo is drawn from code.
 
 Watchpost is a hobby project and is not affiliated with Tesla, Inc. “Tesla” and “Tesla Sentry”
 are trademarks of Tesla, Inc.

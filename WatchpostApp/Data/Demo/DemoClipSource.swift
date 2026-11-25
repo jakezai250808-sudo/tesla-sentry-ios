@@ -1,7 +1,10 @@
 import Foundation
 
 /// The offline demo: the real screens and the real model, fed from files that
-/// ship with the app instead of from a server. Everything it shows is made up.
+/// ship with the app instead of from a server. Everything it shows is made up,
+/// except for one event: a real recording, six cameras composed into one picture,
+/// which every screen marks as such (`RecordedEvent.isRealSample`). Nothing drawn
+/// is ever shown in its place: without its file, that event fails.
 /// `Tools/MakeDemoMedia` draws the footage from code and writes the files this reads
 /// (`demo-events.json`, `demo-telemetry.json`, the clips and stills, the export samples).
 /// The ones that carry words — the place names in `demo-events.json` and the export
@@ -9,7 +12,8 @@ import Foundation
 /// copy in the app's language, like it does for `Localizable.xcstrings`.
 ///
 /// The events are placed relative to the moment the demo is opened, so the list
-/// always starts with something from today. Every clip is 12 seconds long.
+/// always starts with something from today. Every drawn clip is 12 seconds long;
+/// the real recording is as long as its file is, 20 seconds.
 struct DemoClipSource: ClipSource {
     var identity: SourceIdentity { .demo }
 
@@ -30,6 +34,25 @@ struct DemoClipSource: ClipSource {
         var exported: (name: String, ext: String) { (self == .parked ? "demo-export" : "demo-drive-export", "mp4") }
     }
 
+    /// The one real recording the demo ships: twenty seconds of a drive from a public
+    /// data set, its six cameras already composed into one picture, each with its name on
+    /// it and the credit at the bottom. It comes as it is. It is not drawn, it cannot be
+    /// taken apart into cameras, and it says nothing about when or where it was recorded.
+    /// Its names never start with `demo-`, so the media generator leaves them alone.
+    enum RealSample {
+        /// The clip in the bundle, without its extension: the event's one file, and the
+        /// name an export of it keeps.
+        static let clip = "watchpost-real-six-camera-20s"
+        /// One frame of the clip, in the 4:3 shape of the list's thumbnails.
+        static let still = "watchpost-real-six-camera-20s-still"
+        /// How long the clip is, as it was composed. The app does not read it from the file.
+        static let duration: TimeInterval = 20
+        /// The data set the recording comes from and the licence it is under: what the credit under its
+        /// playback opens. `ATTRIBUTION.txt`, which ships beside the clip, says the same.
+        static let source = URL(string: "https://huggingface.co/datasets/cfahlgren1/tesla-fsd-drive-5min")!
+        static let license = URL(string: "https://creativecommons.org/licenses/by/4.0/")!
+    }
+
     /// How long the demo pretends a server takes to burn the watermark. The
     /// sheet asks once a second, so this is seen as three steps.
     private static let exportDuration: TimeInterval = 2.4
@@ -37,21 +60,34 @@ struct DemoClipSource: ClipSource {
 
     /// Newest first.
     private let events: [RecordedEvent]
-    /// The footage behind every clip, by the clip's path.
+    /// The footage behind every drawn clip, by the clip's path.
     private let footageByPath: [String: Footage]
+    /// The path of the real recording's clip; nil when the list does not have it.
+    private let realSamplePath: String?
     private let drivingTelemetry: TelemetryOutcome
     private let sync: SyncStatus
-    /// How long every demo clip is, as the media file says.
+    /// How long every drawn demo clip is, as the media file says.
     private let clipDuration: TimeInterval?
+    /// Where the demo's files are read from: the app's bundle, or one a test made without some of them.
+    private let bundle: Bundle
 
-    init(now: Date = Date()) {
+    init(now: Date = Date(), bundle: Bundle = .main) {
         var events: [RecordedEvent] = []
         var footage: [String: Footage] = [:]
-        if let url = Self.bundled("demo-events", "json"), let data = try? Data(contentsOf: url) {
+        var realSamplePath: String?
+        if let url = bundle.bundled("demo-events", "json"), let data = try? Data(contentsOf: url) {
             let root = JSONValue(data: data)
             clipDuration = root["clipSeconds"]?.double.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
             for row in root["events"]?.array ?? [] {
-                guard let (event, set) = Self.event(row, duration: clipDuration, now: now) else { continue }
+                // The real recording has a row of its own and is not made from a set of footage.
+                if row["realSample"]?.bool == true {
+                    if let event = Self.realSampleEvent(row, now: now, bundle: bundle) {
+                        events.append(event)
+                        realSamplePath = event.groups.first?.videos.first?.path
+                    }
+                    continue
+                }
+                guard let (event, set) = Self.event(row, duration: clipDuration, now: now, bundle: bundle) else { continue }
                 events.append(event)
                 for group in event.groups {
                     for video in group.videos { footage[video.path] = set }
@@ -64,11 +100,13 @@ struct DemoClipSource: ClipSource {
         }
         self.events = events.sorted { $0.start > $1.start }
         self.footageByPath = footage
-        if let url = Self.bundled("demo-telemetry", "json") {
+        self.realSamplePath = realSamplePath
+        if let url = bundle.bundled("demo-telemetry", "json") {
             drivingTelemetry = Wire.telemetry(JSONValue(data: (try? Data(contentsOf: url)) ?? Data()))
         } else {
             drivingTelemetry = .none
         }
+        self.bundle = bundle
     }
 
     // MARK: Building the events
@@ -80,12 +118,7 @@ struct DemoClipSource: ClipSource {
                       parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
     }
 
-    private static func bundled(_ name: String, _ ext: String) -> URL? {
-        Bundle.main.url(forResource: name, withExtension: ext)
-            ?? Bundle.main.url(forResource: name, withExtension: ext, subdirectory: "DemoAssets")
-    }
-
-    private static func event(_ row: JSONValue, duration: TimeInterval?, now: Date) -> (RecordedEvent, Footage)? {
+    private static func event(_ row: JSONValue, duration: TimeInterval?, now: Date, bundle: Bundle) -> (RecordedEvent, Footage)? {
         guard let category = row["category"]?.string.flatMap(ClipCategory.init(rawValue:)),
               let minutesAgo = row["minutesAgo"]?.double, minutesAgo.isFinite,
               let set = row["footage"]?.string.flatMap(Footage.init(rawValue:)) else { return nil }
@@ -117,8 +150,25 @@ struct DemoClipSource: ClipSource {
         meta.city = row["city"]?.string
         meta.street = row["street"]?.string
 
-        let size = groups.flatMap(\.videos).reduce(Int64(0)) { $0 + (Self.bundled(set.clip, camera: $1.camera).flatMap(Self.size(of:)) ?? 0) }
+        let size = groups.flatMap(\.videos).reduce(Int64(0)) { $0 + (bundle.bundled(set.clip, camera: $1.camera).flatMap(Self.size(of:)) ?? 0) }
         return (RecordedEvent(category: category, name: name, meta: meta, groups: groups, sizeBytes: size, isLocked: nil), set)
+    }
+
+    /// The real recording, from its row: which category it is listed under and how long
+    /// ago it sits, placed like the other events. Nothing else is read from the row: it has
+    /// no reason, no place and no timestamp, so nothing about it can read as when or where
+    /// it was recorded. The demo's date is only where it sits in the list.
+    private static func realSampleEvent(_ row: JSONValue, now: Date, bundle: Bundle) -> RecordedEvent? {
+        guard let category = row["category"]?.string.flatMap(ClipCategory.init(rawValue:)),
+              let minutesAgo = row["minutesAgo"]?.double, minutesAgo.isFinite else { return nil }
+        let start = (now.addingTimeInterval(-minutesAgo * 60)).roundedDownToMinute
+        let name = stamp(start)
+        // A clip has to belong to one camera; `.front` is the model's fallback and means none here.
+        let video = ClipVideo(file: "\(RealSample.clip).mp4", camera: .front,
+                              path: "/media/\(category.rawValue)/\(name)/\(RealSample.clip).mp4", duration: RealSample.duration)
+        return RecordedEvent(category: category, name: name, meta: EventMeta(), groups: [ClipGroup(start: start, videos: [video])],
+                             sizeBytes: bundle.bundled(RealSample.clip, "mp4").flatMap(size(of:)) ?? 0, isLocked: nil,
+                             isRealSample: true)
     }
 
     private static func syncStatus(_ row: JSONValue?) -> SyncStatus {
@@ -130,10 +180,6 @@ struct DemoClipSource: ClipSource {
         status.archiveLimitBytes = row?["archiveLimitBytes"]?.int64
         status.measuredAt = Date()
         return status
-    }
-
-    private static func bundled(_ file: (name: String, ext: String), camera: Camera) -> URL? {
-        bundled("\(file.name)-\(camera.rawValue)", file.ext)
     }
 
     private static func size(of url: URL) -> Int64? {
@@ -148,9 +194,18 @@ struct DemoClipSource: ClipSource {
 
     private func footage(of video: ClipVideo) -> Footage? { footageByPath[video.path] }
 
+    /// Whether `path` is the real recording's clip.
+    private func isRealSample(path: String) -> Bool { path == realSamplePath }
+
     func thumbnail(for video: ClipVideo, at time: TimeInterval) -> MediaRequest {
+        // The real recording has the one still, whatever moment is asked for. Without it, nothing is offered
+        // in its place: like a clip the demo does not know, it asks for a picture that is nowhere.
+        if isRealSample(path: video.path) {
+            return bundle.bundled(RealSample.still, "jpg").map { MediaRequest(url: $0) }
+                ?? MediaRequest(url: URL(fileURLWithPath: "/dev/null"))
+        }
         guard let set = footage(of: video),
-              let url = Self.bundled("\(set.thumbnail.name)-\(video.camera.rawValue)", set.thumbnail.ext) else {
+              let url = bundle.bundled("\(set.thumbnail.name)-\(video.camera.rawValue)", set.thumbnail.ext) else {
             return MediaRequest(url: URL(fileURLWithPath: "/dev/null"))
         }
         return MediaRequest(url: url)
@@ -161,15 +216,16 @@ struct DemoClipSource: ClipSource {
         return try Data(contentsOf: request.url)
     }
 
-    /// The demo has one file per camera, so every quality is that file.
+    /// The demo has one file per clip, so every quality is that file: for the real recording, the same file for all its cameras.
     func playbackPlan(for video: ClipVideo, quality: Quality) async throws -> PlaybackPlan {
-        guard let set = footage(of: video), let url = Self.bundled(set.clip, camera: video.camera) else {
-            throw UpstreamError.http(status: 404, message: nil)
-        }
+        let url = isRealSample(path: video.path)
+            ? bundle.bundled(RealSample.clip, "mp4")
+            : footage(of: video).flatMap { bundle.bundled($0.clip, camera: video.camera) }
+        guard let url else { throw UpstreamError.http(status: 404, message: nil) }
         return PlaybackPlan.exact(PlaybackAsset(url: url, quality: quality), requested: quality)
     }
 
-    /// Only clips recorded while driving carry telemetry, as on a real car.
+    /// Only clips recorded while driving carry telemetry, as on a real car. The real recording carries none.
     func telemetry(for video: ClipVideo) async throws -> TelemetryOutcome {
         footage(of: video) == .drive ? drivingTelemetry : .none
     }
@@ -179,18 +235,23 @@ struct DemoClipSource: ClipSource {
     func watermarkAvailability() async throws -> WatermarkAvailability { .available }
 
     func startExport(event: RecordedEvent, video: ClipVideo, quality: Quality) async throws -> ExportHandle {
-        guard let set = footage(of: video), Self.bundled(set.exported, camera: video.camera) != nil else {
+        let id = Self.exportIDPrefix + String(Int64(Date().timeIntervalSince1970 * 1000))
+        // The real recording is handed over as it ships, under its own name: no demo date and no camera in it.
+        if isRealSample(path: video.path) {
+            guard bundle.bundled(RealSample.clip, "mp4") != nil else { throw ExportFailure.server("") }
+            return ExportHandle(id: id, eventID: event.id, file: video.file, camera: video.camera, quality: quality,
+                                fileName: "\(RealSample.clip).mp4")
+        }
+        guard let set = footage(of: video), bundle.bundled(set.exported, camera: video.camera) != nil else {
             throw ExportFailure.server("")
         }
-        return Self.handle(event: event, video: video, quality: quality,
-                           id: Self.exportIDPrefix + String(Int64(Date().timeIntervalSince1970 * 1000)))
+        return Self.handle(event: event, video: video, quality: quality, id: id)
     }
 
     /// Read off the job's own id, so nothing has to be remembered between asks.
     func exportJob(_ handle: ExportHandle) async throws -> ExportJobStatus {
         guard let started = Int64(handle.id.dropFirst(Self.exportIDPrefix.count)),
-              let set = footageByPath["/media/\(handle.eventID)/\(handle.file)"],
-              let url = Self.bundled(set.exported, camera: handle.camera) else {
+              let url = exportedFile(for: handle) else {
             return ExportJobStatus(state: .error, percent: nil, message: nil, sizeBytes: nil)
         }
         let elapsed = Date().timeIntervalSince1970 - Double(started) / 1000
@@ -200,12 +261,18 @@ struct DemoClipSource: ClipSource {
         return ExportJobStatus(state: .running, percent: Int(elapsed / Self.exportDuration * 100), message: nil, sizeBytes: nil)
     }
 
+    /// The file an export hands over: a drawn clip's watermarked sample, or the real recording itself.
+    private func exportedFile(for handle: ExportHandle) -> URL? {
+        let path = "/media/\(handle.eventID)/\(handle.file)"
+        if isRealSample(path: path) { return bundle.bundled(RealSample.clip, "mp4") }
+        return footageByPath[path].flatMap { bundle.bundled($0.exported, camera: handle.camera) }
+    }
+
     /// Brings the bundled sample to the temporary folder in a few steps, as a
     /// download would, so the sheet's progress is seen.
     func downloadExport(_ handle: ExportHandle,
                         progress: @escaping @Sendable (ExportProgress) -> Void) async throws -> URL {
-        guard let set = footageByPath["/media/\(handle.eventID)/\(handle.file)"],
-              let source = Self.bundled(set.exported, camera: handle.camera) else {
+        guard let source = exportedFile(for: handle) else {
             throw ExportFailure.expired
         }
         let data = try Data(contentsOf: source)
@@ -226,6 +293,19 @@ struct DemoClipSource: ClipSource {
             try await Task.sleep(for: .milliseconds(40))
         }
         return destination
+    }
+}
+
+private extension Bundle {
+    /// A file of the demo's, at the top of the bundle or in its `DemoAssets` folder.
+    func bundled(_ name: String, _ ext: String) -> URL? {
+        url(forResource: name, withExtension: ext)
+            ?? url(forResource: name, withExtension: ext, subdirectory: "DemoAssets")
+    }
+
+    /// A file of a set of footage, one per camera: `<name>-<camera>.<ext>`.
+    func bundled(_ file: (name: String, ext: String), camera: Camera) -> URL? {
+        bundled("\(file.name)-\(camera.rawValue)", file.ext)
     }
 }
 

@@ -12,7 +12,16 @@ struct EventRow: View {
         compact ? CGSize(width: 96, height: 72) : Metrics.thumbSize
     }
 
+    /// The tag on the row's picture: which kind of demo footage it is, or none for a server's.
+    private var coverBadge: DemoBadge.Kind? {
+        guard model.isDemo else { return nil }
+        return event.isRealSample ? .realClip : .footage
+    }
+
     private var accessibilityText: Text {
+        if let seconds = event.realSampleSeconds {
+            return Text("Real recording sample") + Text(", ") + Text(Display.sampleSummary(seconds))
+        }
         let reason = TriggerReasons.label(for: event.meta.reason).title
         return Text(Display.clock(event.start))
             + Text(", ")
@@ -65,23 +74,36 @@ struct EventRow: View {
 
     private var text: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(Display.clock(event.start))
-                .font(.headline)
-                .monospacedDigit()
-                .foregroundStyle(Color.labelPrimary)
-            // One line in the row, as drawn: a place that runs long steps down a little, then ends
-            // with an ellipsis. The whole place is still read by VoiceOver and shown on the playback page.
-            Text(Display.place(city: event.meta.city, street: event.meta.street))
-                .font(.subheadline)
-                .foregroundStyle(Color.labelSecondary)
-                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
-                .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 1 : 0.9)
-                .truncationMode(.tail)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(TriggerReasons.label(for: event.meta.reason).title)
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(Color.labelPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            if let seconds = event.realSampleSeconds {
+                // No clock time and no place: the real recording has neither, and the moment the demo
+                // gives this row is only where it sits in the list.
+                Text("Real recording sample")
+                    .font(.headline)
+                    .foregroundStyle(Color.labelPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(Display.sampleSummary(seconds))
+                    .font(.subheadline)
+                    .foregroundStyle(Color.labelSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(Display.clock(event.start))
+                    .font(.headline)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.labelPrimary)
+                // One line in the row, as drawn: a place that runs long steps down a little, then ends
+                // with an ellipsis. The whole place is still read by VoiceOver and shown on the playback page.
+                Text(Display.place(city: event.meta.city, street: event.meta.street))
+                    .font(.subheadline)
+                    .foregroundStyle(Color.labelSecondary)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                    .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 1 : 0.9)
+                    .truncationMode(.tail)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(TriggerReasons.label(for: event.meta.reason).title)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(Color.labelPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .multilineTextAlignment(.leading)
@@ -94,13 +116,21 @@ struct EventRow: View {
             .accessibilityHidden(true)
     }
 
+    /// The still the source has for the cover, except for the real recording without its own in the app:
+    /// the demo's word for "no such picture" is a path to nowhere, and the row then shows no preview.
+    private func preview(for cover: (video: ClipVideo, time: TimeInterval)) -> MediaRequest? {
+        guard let request = model.source?.thumbnail(for: cover.video, at: cover.time) else { return nil }
+        return event.isRealSample && request.url.path == "/dev/null" ? nil : request
+    }
+
     @ViewBuilder
     private var cover: some View {
-        if let cover = event.cover {
+        // Nothing drawn stands in for the real recording: its own still, or no preview at all.
+        if let cover = event.cover, let request = preview(for: cover) {
             Thumbnail(
-                request: model.source?.thumbnail(for: cover.video, at: cover.time),
+                request: request,
                 name: cover.video.camera.title,
-                isDemo: model.isDemo,
+                badge: coverBadge,
                 size: coverSize
             )
             .accessibilityHidden(true)

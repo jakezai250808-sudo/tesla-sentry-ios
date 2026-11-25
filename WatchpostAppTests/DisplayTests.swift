@@ -24,4 +24,19 @@ struct DisplayTests {
         #expect(Display.place(city: nil, street: "Sample Car Park A", bundle: english) == "Sample Car Park A")
         #expect(Display.place(city: nil, street: nil, bundle: english) == Display.missing)
     }
+
+    /// The demo's real recording is named by what it is, its cameras and its length, in words: never by
+    /// the moment the demo gives it, which is only where it sits in the list.
+    @Test(arguments: ["en", "zh-Hans"])
+    func theRealRecordingIsNamedByItsCamerasAndItsLength(language: String) throws {
+        let table = try bundle(for: language)
+        let length = Display.sampleLength(20, bundle: table)
+        let summary = Display.sampleSummary(20, bundle: table)
+        #expect(length.contains("20"))
+        #expect(summary.contains(length))
+        if language == "en" {
+            #expect(length == "20 seconds")
+            #expect(summary == "Six cameras · 20 seconds")
+        }
+    }
 }

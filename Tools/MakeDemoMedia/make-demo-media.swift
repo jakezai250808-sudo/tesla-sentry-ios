@@ -54,7 +54,10 @@
 //     demo-events.json           the demo's events (demoEvents below): where each
 //                                one sits relative to the moment the demo is
 //                                opened, which footage it uses, and what its
-//                                event.json would say
+//                                event.json would say. Its first row is the real
+//                                recording sample, which is not made here: that
+//                                file ships separately (watchpost-real-six-camera-20s*)
+//                                and is neither written nor removed by a run
 //
 //   swift make-demo-media.swift <output-directory>
 //     everything, for every language
@@ -1527,7 +1530,8 @@ struct DemoEvent {
     let minutesAgo: Double
     /// Minutes of footage, one after another.
     let groups: Int
-    let footage: ClipSet
+    /// The drawn footage behind the event; nil for the real recording, which ships as its own file.
+    let footage: ClipSet?
     var reason: String? = nil
     /// The raw `camera` number of event.json.
     var camera: Int? = nil
@@ -1543,6 +1547,9 @@ struct DemoEvent {
 /// where telemetry comes from. The list is in the order the server gives it,
 /// newest first.
 let demoEvents: [DemoEvent] = [
+    // The one real recording the demo ships. It is not made by this tool: the app finds its
+    // file by name (DemoClipSource.RealSample), and the row only says where it sits in the list.
+    DemoEvent(category: "SentryClips", minutesAgo: 3, groups: 1, footage: nil),
     DemoEvent(category: "SentryClips", minutesAgo: 6, groups: 1, footage: .parked,
               reason: "sentry_aware_object_detection", camera: 5, triggerOffset: 6.5),
     DemoEvent(category: "SentryClips", minutesAgo: 3 * 60 + 4, groups: 1, footage: .parked,
@@ -1579,11 +1586,16 @@ func demoEventsJSON(language: Language) throws -> Data {
     let events: [[String: Any]] = demoEvents.map { event in
         var row: [String: Any] = [
             "category": event.category, "minutesAgo": event.minutesAgo, "groups": event.groups,
-            "footage": event.footage.rawValue,
         ]
-        if event.hasPlace {
-            row["city"] = language.city
-            row["street"] = language.street(for: event.footage)
+        if let footage = event.footage {
+            row["footage"] = footage.rawValue
+            if event.hasPlace {
+                row["city"] = language.city
+                row["street"] = language.street(for: footage)
+            }
+        } else {
+            // The real recording: no footage from this tool, and no place.
+            row["realSample"] = true
         }
         row["reason"] = event.reason
         row["camera"] = event.camera

@@ -158,6 +158,18 @@ enum Display {
         return formatter.string(from: Measurement(value: max(value, 0), unit: UnitDuration.seconds))
     }
 
+    /// How long the demo's real recording sample is, in words: "20 seconds".
+    static func sampleLength(_ seconds: Int, bundle: Bundle = .main) -> String {
+        String(format: String(localized: "%lld seconds", bundle: bundle, comment: "Length of the demo's real recording sample"), seconds)
+    }
+
+    /// The same with what the sample is: "Six cameras · 20 seconds".
+    static func sampleSummary(_ seconds: Int, bundle: Bundle = .main) -> String {
+        String(format: String(localized: "Six cameras · %lld seconds", bundle: bundle,
+                              comment: "The demo's real recording sample: its cameras and its length"),
+               seconds)
+    }
+
     /// A place as the event row shows it: "City · Street" where words are spaced, "城市·街道"
     /// where they are not, whichever is there, or the dash.
     static func place(city: String?, street: String?, bundle: Bundle = .main) -> String {

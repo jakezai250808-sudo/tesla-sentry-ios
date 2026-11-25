@@ -78,6 +78,17 @@
         }
       }
     },
+    "%lld seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld秒"
+          }
+        }
+      }
+    },
     ", " : {
       "extractionState" : "manual",
       "localizations" : {
@@ -441,6 +452,17 @@
         }
       }
     },
+    "Creative Commons Attribution 4.0 International license (CC BY 4.0)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "知识共享署名 4.0 国际许可协议（CC BY 4.0）"
+          }
+        }
+      }
+    },
     "Current" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -584,6 +606,17 @@
         }
       }
     },
+    "Edited by Watchpost: shortened, and the six cameras composed into one picture." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watchpost 作了剪辑：缩短时长，并将六路摄像头画面合成为一幅。"
+          }
+        }
+      }
+    },
     "Enter an address that starts with http:// or https://." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -690,6 +723,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "筛选"
+          }
+        }
+      }
+    },
+    "Footage: Tesla FSD Drive (5 min, 6 cameras) by cfahlgren1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "素材：cfahlgren1 的 Tesla FSD Drive（5 分钟，6 路摄像头）"
           }
         }
       }
@@ -1223,6 +1267,39 @@
         }
       }
     },
+    "Real clip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "真实画面"
+          }
+        }
+      }
+    },
+    "Real recording sample" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "真实录像示例"
+          }
+        }
+      }
+    },
+    "Real recording sample with six cameras in one picture" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "真实录像示例，六路摄像头画面合为一幅"
+          }
+        }
+      }
+    },
     "Rear" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1597,6 +1674,28 @@
         }
       }
     },
+    "Six cameras in one picture, composed beforehand. They can't be switched separately." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "六路摄像头画面已预先合成在一幅画面里，无法单独切换。"
+          }
+        }
+      }
+    },
+    "Six cameras · %lld seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "六路摄像头·%lld秒"
+          }
+        }
+      }
+    },
     "Speed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1758,6 +1857,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出文件已不在服务器上，请重新生成。"
+          }
+        }
+      }
+    },
+    "The real recording as it is in the app, credit included. Nothing is added." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出的是 App 内的真实录像本身，画面内已含署名，不再添加任何内容。"
+          }
+        }
+      }
+    },
+    "The real recording sample can't be played in this build." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "真实录像示例在此版本中无法播放。"
           }
         }
       }

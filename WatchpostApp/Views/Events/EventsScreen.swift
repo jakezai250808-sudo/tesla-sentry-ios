@@ -396,25 +396,41 @@ struct EventsScreen: View {
         .accessibilityIdentifier("events.empty")
     }
 
+    /// The list's cards. The real recording sample has no date of its own, so it is not put under a
+    /// day's header: it comes first, in a card of its own, and the days follow.
     private func eventDays(_ days: [EventDay], compact: Bool) -> some View {
-        LazyVStack(alignment: .leading, spacing: 24) {
-            ForEach(days) { day in
+        let samples = days.flatMap(\.events).filter(\.isRealSample)
+        let dated = days.compactMap { day -> EventDay? in
+            let events = day.events.filter { !$0.isRealSample }
+            return events.isEmpty ? nil : EventDay(day: day.day, events: events)
+        }
+        return LazyVStack(alignment: .leading, spacing: 24) {
+            if !samples.isEmpty {
+                rows(samples, compact: compact)
+                    .card()
+            }
+            ForEach(dated) { day in
                 VStack(alignment: .leading, spacing: 8) {
                     dayHeader(day)
-                    VStack(spacing: 0) {
-                        ForEach(day.events) { event in
-                            EventRow(event: event, compact: compact)
-                            if event.id != day.events.last?.id {
-                                EventRowSeparator(compact: compact)
-                            }
-                        }
-                    }
-                    .card()
+                    rows(day.events, compact: compact)
+                        .card()
                 }
             }
         }
         .padding(.top, 8)
         .accessibilityIdentifier("events.list")
+    }
+
+    /// The rows of one card, each followed by the line under it but the last.
+    private func rows(_ events: [RecordedEvent], compact: Bool) -> some View {
+        VStack(spacing: 0) {
+            ForEach(events) { event in
+                EventRow(event: event, compact: compact)
+                if event.id != events.last?.id {
+                    EventRowSeparator(compact: compact)
+                }
+            }
+        }
     }
 
     @ViewBuilder

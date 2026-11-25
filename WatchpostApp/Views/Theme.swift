@@ -138,6 +138,8 @@ struct DemoBadge: View {
     enum Kind {
         case data
         case footage
+        /// The demo's one real recording, tagged the same size as the drawn footage.
+        case realClip
     }
 
     var kind: Kind = .footage
@@ -153,17 +155,24 @@ struct DemoBadge: View {
                 .fixedSize()
                 .accessibilityAddTraits(.isStaticText)
         case .footage:
-            // Short on purpose: it sits in a thumbnail, where a longer tag wraps onto two lines.
-            Text("Demo clip", comment: "Tag in the corner of a demo picture or video")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .padding(.horizontal, 8)
-                .frame(minHeight: Metrics.badgeHeight)
-                .background(Color.videoOverlay, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .accessibilityAddTraits(.isStaticText)
+            pictureTag(Text("Demo clip", comment: "Tag in the corner of a demo picture or video"))
+        case .realClip:
+            // Short on the same grounds as "Demo clip": it sits in a thumbnail, and over a picture of its own.
+            pictureTag(Text("Real clip", comment: "Tag in the corner of the demo's one real recording, on its thumbnail and over its video"))
         }
+    }
+
+    /// White on black at 72%, on one line: it sits over a picture.
+    private func pictureTag(_ words: Text) -> some View {
+        words
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, 8)
+            .frame(minHeight: Metrics.badgeHeight)
+            .background(Color.videoOverlay, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .accessibilityAddTraits(.isStaticText)
     }
 }
 
@@ -190,8 +199,8 @@ struct Thumbnail: View {
     let request: MediaRequest?
     /// What the picture is of, said by VoiceOver and drawn while nothing is there.
     let name: String
-    /// Whether the picture stands for demo footage.
-    var isDemo = false
+    /// The tag in the picture's corner, for the demo's footage; nil for a server's.
+    var badge: DemoBadge.Kind?
     var size = Metrics.thumbSize
 
     @Environment(AppModel.self) private var model
@@ -207,11 +216,11 @@ struct Thumbnail: View {
             } else if request != nil {
                 ProgressView().tint(Color.labelSecondary)
             }
-            if isDemo {
+            if let badge {
                 VStack {
                     Spacer()
                     HStack {
-                        DemoBadge(kind: .footage)
+                        DemoBadge(kind: badge)
                         Spacer()
                     }
                     .padding(6)

@@ -41,6 +41,12 @@ export samples into the directory given. To refresh the app's demo footage, run 
 `--still <out.png> <parked|drive> <camera> <seconds>` renders one frame for looking at a moment.
 Everything is drawn from code: no real car, place, face or plate.
 
+The demo's one real recording is the exception, and this tool never makes it:
+`WatchpostApp/DemoAssets/watchpost-real-six-camera-20s*` (the clip and its still) ship as they are,
+under the CC BY 4.0 licence described in `ATTRIBUTION.txt` beside them. The generator neither writes
+nor removes anything whose name does not start with `demo-`, and `demo-events.json` only says where
+that recording sits in the list (`"realSample": true`); the app finds its file by name.
+
 Two kinds of file carry words, the export samples and the place names in `demo-events.json`, so
 each language has its own copy of those in `<language>.lproj` and the app reads the copy in its
 own language. The clips, thumbnails and telemetry are shared. A new place name or strip text

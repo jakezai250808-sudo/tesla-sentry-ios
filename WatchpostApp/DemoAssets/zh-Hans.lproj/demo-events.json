@@ -2,6 +2,12 @@
   "clipSeconds" : 12,
   "events" : [
     {
+      "category" : "SentryClips",
+      "groups" : 1,
+      "minutesAgo" : 3,
+      "realSample" : true
+    },
+    {
       "camera" : 5,
       "category" : "SentryClips",
       "city" : "示例市",
