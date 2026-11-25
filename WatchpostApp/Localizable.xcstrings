@@ -1982,13 +1982,13 @@
         }
       }
     },
-    "Up to %lld images. Feedback also includes the app version, device model, system version, language and region." : {
+    "Up to %lld images. Feedback includes the app version, device model, system version, language and region. It may also include a device proof identifier to verify that it came from this app. This identifier can link feedback and crash reports from the same app installation." : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最多 %lld 张图片。反馈会附带应用版本、设备型号、系统版本、语言和地区。"
+            "value" : "最多 %lld 张图片。反馈会附带应用版本、设备型号、系统版本、语言和地区，也可能附带设备证明标识，用于验证反馈来自本应用。该标识可关联同一次安装的反馈与崩溃报告。"
           }
         }
       }

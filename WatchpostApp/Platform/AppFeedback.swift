@@ -193,7 +193,7 @@ struct FeedbackView: View {
                     }
                     .disabled(images.count >= FeedbackConfig.maximumImages)
                 } footer: {
-                    Text("Up to \(FeedbackConfig.maximumImages) images. Feedback also includes the app version, device model, system version, language and region.")
+                    Text("Up to \(FeedbackConfig.maximumImages) images. Feedback includes the app version, device model, system version, language and region. It may also include a device proof identifier to verify that it came from this app. This identifier can link feedback and crash reports from the same app installation.")
                 }
                 if let failure {
                     Section {

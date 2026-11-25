@@ -78,9 +78,11 @@ Buy, and a purchase the App Store could not verify. Nothing a test buys is repor
   default; the switch is on the Servers page, and turning it off deletes at once what had not been
   sent yet, together with that number.
 - A crash report carries the app version, device model, system version and language, and the crash
-  text with addresses removed. Feedback carries what you typed, the pictures you picked, and the
-  app version, device model, system version and language. A tip purchase is reported with Apple's
-  receipt.
+  text with addresses removed. Feedback includes
+  what you typed, the pictures you picked, and the app version, device model, system version,
+  language and region. It may also include a device proof identifier to verify that it came from
+  this app. This identifier can link feedback and crash reports from the same app installation.
+  A tip purchase is reported with Apple's receipt.
 - The server address and password stay on the device: the password in the iOS Keychain, the rest
   in the app's own preferences.
 - Plain `http://` is allowed because home servers are often reached that way on a local network.

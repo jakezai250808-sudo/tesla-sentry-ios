@@ -6,6 +6,7 @@ One JSON file per screen area, flat `{ "<English key as in code>": "<zh-Hans>" }
 
 - `core.json` — shared and frozen-layer keys (camera names, reasons, categories, common actions).
 - `connect.json`, `events.json`, `playback.json` — one per screen area.
+- `support.json` — feedback, tips and the usage-statistics switch.
 - `InfoPlist.json` — the home-screen name and the Local Network usage text.
 
 Rules:
