@@ -43,13 +43,13 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
 
 ## 打赏
 
-打赏是自愿的应用内购买，不解锁任何功能。想不花钱试一试，把 `WatchpostAppTests/Tips.storekit` 设为 scheme 的 StoreKit Configuration（Product ▸ Scheme ▸ Edit Scheme…，Run ▸ Options）再运行：购买走 StoreKit Testing，不会真的扣款。这样买的打赏和其他打赏一样会上报，收据是 StoreKit Testing 的。打赏的 App Store 逻辑由单元测试用同一个文件覆盖（`WatchpostAppTests/StoreKitTipStoreTests.swift`）：在另一台设备上买的打赏、退款、购买前询问（Ask to Buy），以及 Apple 未能验证的购买。测试里买的东西一律不上报。
+打赏是自愿的应用内购买，不解锁任何功能。想不花钱试一试，把 `WatchpostAppTests/Tips.storekit` 设为 scheme 的 StoreKit Configuration（Product ▸ Scheme ▸ Edit Scheme…，Run ▸ Options）再运行：购买走 StoreKit Testing，不会真的扣款。这样买的打赏和其他打赏一样会上报，收据是 StoreKit Testing 的。打赏的 App Store 逻辑由单元测试用同一个文件覆盖（`WatchpostAppTests/StoreKitTipStoreTests.swift`）：在另一台设备上买的打赏、「恢复购买」查到还没完成就被退款的打赏、购买前询问（Ask to Buy），以及 Apple 未能验证的购买。测试里买的东西一律不上报。App 运行期间经监听送来的退款没有覆盖：StoreKit Testing 里，运行中的监听有时收到、有时没收到退款，已完成的打赏被退款则从未收到，留给真机验证。
 
 ## 隐私
 
 - 不建账号，没有自己的云服务。除了你填写的地址，App 只和开发者的上报服务（`apps.air.build`）通信：可以关掉的使用统计、崩溃报告、你主动发出的反馈、打赏购买记录。不含广告 SDK。
-- 使用统计只记打开了哪些页面、App 的使用次数，用的是每次安装新生成的随机编号，不包含服务器地址、密码和录像。默认开启，开关在「服务器」页；关掉时，没发完的记录和这个编号当场删除。
-- 崩溃报告带 App 版本、设备型号、系统版本和语言，崩溃文字里的地址已去掉。反馈包含你填写的文字和所选图片，并附带应用版本、设备型号、系统版本、语言和地区，也可能附带设备证明标识，用于验证反馈来自本应用。该标识可关联同一次安装的反馈与崩溃报告。打赏购买会连同 Apple 的收据一起上报。
+- 使用统计只记打开了哪些页面、App 的使用次数，用的是每次安装新生成的随机编号，不包含服务器地址、密码和录像。默认开启，开关在「服务器」页；关掉时统计当场停止，还没交给网络发出的记录和这个编号会被删除，已经上路的一批可能仍会送达。
+- 崩溃报告带 App 版本、设备型号、系统版本和语言，崩溃文字里 App 认得出的地址已换成 `<address>`，也可能带同一个设备证明标识。反馈包含你填写的文字和所选图片，并附带应用版本、设备型号、系统版本、语言和地区，也可能附带设备证明标识，用于验证反馈来自本应用。该标识可关联同一次安装的反馈与崩溃报告。打赏购买会连同 Apple 的收据一起上报。
 - 服务器地址和密码只留在本机：密码在 iOS 钥匙串里，其余在 App 自己的偏好设置里。
 - 允许明文 `http://`，因为家里的服务器在局域网里常常是这样访问的。访问局域网里的服务器时，iOS 会询问是否允许“本地网络”权限。
 

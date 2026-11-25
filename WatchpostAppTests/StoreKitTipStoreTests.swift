@@ -7,9 +7,11 @@ import Testing
 
 /// The real store against StoreKit Testing, which stands in for the App Store with the tips that
 /// `Tips.storekit`, beside this file, lists. The fake store answers as the App Store would, but it
-/// cannot say which of Apple's lists a consumable is in, and the fix to Restore rests on exactly that:
-/// Apple leaves consumables out of the current entitlements, so the store reads unfinished tips from
-/// the unfinished list and refunds from the full history. Here Apple's own lists answer.
+/// cannot say which of the App Store's lists a consumable is in, and the fix to Restore rests on
+/// exactly that: Apple leaves consumables out of the current entitlements, so the store reads
+/// unfinished tips from the unfinished list and refunds from the full history. Here it is StoreKit
+/// Testing's own lists that answer. They go along with Apple's documentation except where a test
+/// says so; what differs, and what the lists cannot settle, is left to a real device.
 /// One test at a time, because a session belongs to the whole process.
 @Suite(.serialized)
 struct StoreKitTipStoreTests {
@@ -72,13 +74,17 @@ struct StoreKitTipStoreTests {
 
     /// A refund of a tip is in no current entitlement either, for the same reason: no consumable ever
     /// is, and one taken back is not either. The store used to read refunds from there too, so a refund
-    /// was only ever heard of through the listener. A refund stays in the full history with the day it
-    /// was revoked, which is where the store looks now: Restore finds exactly that tip there, and
-    /// nothing to bring back, because a refund is no purchase.
+    /// was only ever heard of through the listener. Apple documents that a consumable it refunded or
+    /// revoked stays in the full history, finished or not, with the day it was revoked; that is where
+    /// the store looks now. Here the tip is still unfinished when it is refunded, and for that shape
+    /// StoreKit Testing agrees: Restore finds exactly that tip in the full history, and nothing to
+    /// bring back, because a refund is no purchase.
     ///
-    /// The tip is bought outside the app, as on another device: StoreKit Testing refunds a purchase made
-    /// that way, and Apple documents no other. A tip bought and finished in the app and then refunded,
-    /// StoreKit Testing hands over in no list at all, so that shape is left to a real device.
+    /// The tip is bought outside the app, as on another device: `refundTransaction` is documented for
+    /// a purchase that completes outside the app. A tip still unfinished when it is refunded is the
+    /// one shape StoreKit Testing shows in a list. A tip bought and finished in the app and then
+    /// refunded, the usual shape, it shows in no list at all, though Apple documents that the full
+    /// history keeps it: that is left to a real device.
     @Test
     func refundOfATipBoughtElsewhereIsFoundInTheFullHistoryAndInNoEntitlement() async throws {
         try await withStoreKitTesting { run in
@@ -91,11 +97,13 @@ struct StoreKitTipStoreTests {
             #expect(before.isEmpty)
 
             try run.session.refundTransaction(identifier: UInt(transactionID))
-            // The App Store has taken the tip back by now. Apple's unfinished list is read until it says so.
+            // Taken back by now. The unfinished list is read until StoreKit Testing says so, which takes
+            // a moment.
             let settled = await waitUntilTakenBack(transactionID)
             try #require(settled, "StoreKit Testing does not list the tip as taken back")
 
-            // Taken back as it is, the tip is in no current entitlement.
+            // Taken back as it is, the tip is in no current entitlement. No consumable ever is, refunded
+            // or not, so this is true of every tip and says little by itself; it is kept with the rest.
             let entitled = await listed(in: Transaction.currentEntitlements)
             #expect(!entitled.contains(where: { $0.id == transactionID }))
 
@@ -111,20 +119,29 @@ struct StoreKitTipStoreTests {
         }
     }
 
-    /// A refund reaches the app only through the listener, and it arrives as the refund it now is,
-    /// never as a purchase: the store reports it as what it is, names the tip it takes back, so the
-    /// ticket goes when the refund is of the ticket, and finishes it. Apple does not promise to hand one
-    /// transaction over once, so what is checked is every word of the listener, not how many words.
+    /// Apple's example for the listener handles a refund that comes while the app is running. It has
+    /// to arrive as the refund it now is, never as a purchase: the store reports it as what it is,
+    /// names the tip it takes back, so the ticket goes when the refund is of the ticket, and finishes
+    /// it. Apple does not promise to hand one transaction over once, so what is checked is every
+    /// word of the listener, not how many words. A refund made while the app was closed is Restore's
+    /// to find in the full history. The test above covers that for the one shape StoreKit Testing
+    /// shows in a list, a tip still unfinished when it is refunded.
     ///
-    /// Disabled, left to a real device with the sandbox: StoreKit Testing does not hand a refund to
-    /// the listener the way Apple says it does. The tip is bought outside the app, as on another
-    /// device, the only purchase `refundTransaction` covers, and the listener takes that purchase from
-    /// the App Store, reports it and finishes it. The refund that follows reaches the running listener
-    /// not at all, and is in no list either once the tip is finished. A refund made before the listener
-    /// starts, as at launch, it handed to a listener starting later in three different ways and not at
-    /// all in the full suite. A tip bought in the app and refunded, finished or not, is in no list.
-    /// So the listener's word on a refund is not exercised here.
-    @Test(.disabled("StoreKit Testing does not hand a refund to the listener; left to a real device"))
+    /// Disabled, left to a real device with the sandbox. What StoreKit Testing did in the runs made
+    /// here:
+    /// - a tip bought in the app, finished, then refunded: delivered to nobody and in no list, twice;
+    /// - a tip bought in the app, left unfinished, then refunded: delivered to a running listener as
+    ///   a refund in two probe runs; in the full run where a test waited for it, not delivered, and
+    ///   the tip was still in the unfinished list;
+    /// - a tip bought elsewhere, refunded before any listener: handed to a listener that started
+    ///   later as the refund it now is, in both probe runs whose logs remain;
+    /// - this shape, a tip bought elsewhere, unfinished, refunded while a listener runs: in the one
+    ///   full run made, the running listener took the purchase and reported it, and the refund that
+    ///   followed was not delivered while the test waited.
+    /// No cause was found for the difference between the runs. The purchase is the one
+    /// `refundTransaction` is documented for, one that completes outside the app, and the test keeps
+    /// checking that half. The listener's word on a refund is not exercised.
+    @Test(.disabled("StoreKit Testing did not hand this refund to the listener in the run made here; left to a real device"))
     func listenerHearsTheRefundOfATipBoughtElsewhere() async throws {
         try await withStoreKitTesting { run in
             // Asking for the listener starts it. This keeps what it says.
@@ -155,7 +172,7 @@ struct StoreKitTipStoreTests {
             #expect(run.reported.get().last == takenBack)
             #expect(run.reported.get().filter { $0.revoked } == [takenBack])
 
-            // The listener finished it: Apple's unfinished list does not hold it.
+            // The listener finished it: the unfinished list does not hold it.
             let unfinished = await listed(in: Transaction.unfinished)
             #expect(unfinished.allSatisfy { $0.id != transactionID })
         }
@@ -286,7 +303,7 @@ private func askToBuyPurchase(of productID: String, in session: SKTestSession) a
     }
 }
 
-/// Whether Apple's unfinished list shows the transaction as taken back, waited for a few seconds.
+/// Whether the unfinished list shows the transaction as taken back, waited for a few seconds.
 /// StoreKit Testing applies a refund to its own records at once and to the lists the app reads a moment
 /// later, so the first list read right after a refund can still be the old one.
 private func waitUntilTakenBack(_ transactionID: UInt64) async -> Bool {

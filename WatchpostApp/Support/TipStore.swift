@@ -43,9 +43,10 @@ enum TipStoreProblem: Error, Equatable, Sendable {
 struct LaterTips: Sendable {
     /// Tips it confirms, as when Ask to Buy is approved. Each is reported and finished before it arrives.
     var purchases: AsyncStream<TipReceipt>
-    /// Tips it takes back, a refund, by the App Store's number for the purchase. Covers refunds of tips
-    /// this device finished, which only the full history still lists.
-    /// Each is reported and finished before it arrives.
+    /// Tips it takes back, a refund, by the App Store's number for the purchase: whatever the listener
+    /// hands over. Each is reported and finished before it arrives. No unit test exercises this stream:
+    /// in StoreKit Testing a running listener was handed a refund in some runs and not in others,
+    /// so it is left to a real device.
     var refunds: AsyncStream<UInt64>
 }
 
@@ -117,10 +118,13 @@ struct StoreKitTipStore: TipStore {
         return receipts
     }
 
-    /// A refund stays in the full history with the day it was revoked, and the current entitlements
-    /// drop it: read from there this always came back empty too, so a refund was only ever heard of
-    /// through the listener. Only revoked tips are touched here; a purchase still unfinished is left
-    /// whole for `unfinishedTips`, which turns it into the ticket.
+    /// Apple documents that a consumable it refunded or revoked stays in the full history, finished or
+    /// not, with the day it was revoked, and that the current entitlements leave consumables out: read
+    /// from there this always came back empty too, so a refund was only ever heard of through the
+    /// listener. StoreKit Testing shows a refunded tip there only while it is still unfinished; a tip
+    /// finished in the app and refunded afterwards, the usual shape, it shows in no list, so that is
+    /// left to a real device. Only revoked tips are touched here; a purchase still unfinished
+    /// is left whole for `unfinishedTips`, which turns it into the ticket.
     func refundedTips() async -> [UInt64] {
         var numbers: [UInt64] = []
         var seen: Set<UInt64> = []

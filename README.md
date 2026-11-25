@@ -65,8 +65,11 @@ Tips are voluntary in-app purchases that unlock nothing. To try them without pay
 Scheme…, Run ▸ Options) and run: purchases then go through StoreKit Testing, and nothing is charged.
 A tip bought that way is reported like any other, with StoreKit Testing's receipt. How the tip store
 behaves is covered by the unit tests, which run it against that same file
-(`WatchpostAppTests/StoreKitTipStoreTests.swift`): a tip bought on another device, a refund, Ask to
-Buy, and a purchase the App Store could not verify. Nothing a test buys is reported.
+(`WatchpostAppTests/StoreKitTipStoreTests.swift`): a tip bought on another device, Restore finding a
+tip that was refunded while still unfinished, Ask to Buy, and a purchase the App Store could not
+verify. Nothing a test buys is reported. A refund that arrives while the app runs, through the
+listener, is not covered: in StoreKit Testing a running listener was handed one in some runs and
+not in others, and never for a tip already finished, so that is left to a real device.
 
 ## Privacy
 
@@ -75,10 +78,12 @@ Buy, and a purchase the App Store could not verify. Nothing a test buys is repor
   reports, feedback you choose to send, and tip purchases. There is no advertising SDK.
 - Usage statistics count which screens are opened and how often the app runs, under a random number
   made anew for each install. Never the server address, the password or the recordings. On by
-  default; the switch is on the Servers page, and turning it off deletes at once what had not been
-  sent yet, together with that number.
+  default; the switch is on the Servers page. Turning it off stops the statistics at once and deletes
+  what had not been handed to the network yet, together with that number. One batch that was already
+  on its way can still arrive.
 - A crash report carries the app version, device model, system version and language, and the crash
-  text with addresses removed. Feedback includes
+  text, with any address in it that the app recognises replaced by `<address>`. It may also carry the
+  same device proof identifier. Feedback includes
   what you typed, the pictures you picked, and the app version, device model, system version,
   language and region. It may also include a device proof identifier to verify that it came from
   this app. This identifier can link feedback and crash reports from the same app installation.
