@@ -144,12 +144,13 @@ struct DemoClipSourceTests {
         let folder = FileManager.default.temporaryDirectory
             .appendingPathComponent("DemoClipSourceTests.\(UUID().uuidString).bundle", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: folder) }
-        let assets = folder.appendingPathComponent("DemoAssets/en.lproj", isDirectory: true)
+        // The list goes straight into DemoAssets: only the app itself is searched inside its language
+        // folders there, a bundle opened by its address is not.
+        let assets = folder.appendingPathComponent("DemoAssets", isDirectory: true)
         try FileManager.default.createDirectory(at: assets, withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: try #require(Self.bundled("demo-events", "json")),
                                          to: assets.appendingPathComponent("demo-events.json"))
-        let info: [String: Any] = ["CFBundleIdentifier": "watchpost.tests.made", "CFBundleDevelopmentRegion": "en",
-                                    "CFBundleLocalizations": ["en"]]
+        let info: [String: String] = ["CFBundleIdentifier": "watchpost.tests.made"]
         try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
             .write(to: folder.appendingPathComponent("Info.plist"))
         let source = DemoClipSource(now: Self.now, bundle: try #require(Bundle(url: folder)))
