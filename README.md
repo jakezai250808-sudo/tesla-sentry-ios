@@ -44,7 +44,8 @@ press ⌘R. On the connect screen, choose **Try demo** to look around without a 
 From a terminal, with a simulator already booted:
 
 ```sh
-xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimulator build &&
+xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimulator \
+  CONFIGURATION_BUILD_DIR="$PWD/build/Debug-iphonesimulator" build &&
 xcrun simctl install booted build/Debug-iphonesimulator/WatchpostApp.app &&
 xcrun simctl launch booted com.jakezai.watchpost-pwvw
 ```
@@ -59,8 +60,17 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
 
 ## Privacy
 
-- No account and no cloud service of its own. The only thing the app talks to is the address you
-  type. There is no analytics or advertising SDK in it.
+- No account and no cloud service of its own. Besides the address you type, the app talks only to
+  the developer's report service at `apps.air.build`: usage statistics you can switch off, crash
+  reports, feedback you choose to send, and tip purchases. There is no advertising SDK.
+- Usage statistics count which screens are opened and how often the app runs, under a random number
+  made anew for each install. Never the server address, the password or the recordings. On by
+  default; the switch is on the Servers page, and turning it off deletes at once what had not been
+  sent yet, together with that number.
+- A crash report carries the app version, device model, system version and language, and the crash
+  text with addresses removed. Feedback carries what you typed, the pictures you picked, and the
+  app version, device model, system version and language. A tip purchase is reported with Apple's
+  receipt.
 - The server address and password stay on the device: the password in the iOS Keychain, the rest
   in the app's own preferences.
 - Plain `http://` is allowed because home servers are often reached that way on a local network.

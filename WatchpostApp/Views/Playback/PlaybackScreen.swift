@@ -101,6 +101,7 @@ struct PlaybackScreen: View {
                 .ignoresSafeArea()
             }
         }
+        .usageScreen(.playback)
     }
 
     private func demoRow(camera: Camera) -> some View {

@@ -79,6 +79,7 @@ struct ServerFormSheet: View {
             // end of its request is the other dismissal signal. "Cancel connecting" is not one.
             finish()
         }
+        .usageScreen(.serverForm)
     }
 
     private func finish() {

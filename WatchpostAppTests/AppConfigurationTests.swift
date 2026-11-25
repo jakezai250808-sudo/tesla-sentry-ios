@@ -71,6 +71,28 @@ struct AppConfigurationTests {
         #expect((reasons?["NSPrivacyAccessedAPITypeReasons"] as? [String]) == ["CA92.1"])
     }
 
+    /// The manifest names what leaves the device, and no more: crash reports, screen counts, feedback with its
+    /// images, and tip purchases. None of it is tied to a person or used for tracking.
+    @Test
+    func privacyManifestNamesWhatIsSentAndNothingIsLinkedOrTracking() throws {
+        let url = try #require(Bundle.main.url(forResource: "PrivacyInfo", withExtension: "xcprivacy"))
+        let manifest = try #require(PropertyListSerialization.propertyList(from: Data(contentsOf: url), format: nil) as? [String: Any])
+        #expect(manifest["NSPrivacyTrackingDomains"] as? [String] == [])
+
+        let collected = try #require(manifest["NSPrivacyCollectedDataTypes"] as? [[String: Any]])
+        #expect(collected.compactMap { $0["NSPrivacyCollectedDataType"] as? String } == [
+            "NSPrivacyCollectedDataTypeCrashData", "NSPrivacyCollectedDataTypeProductInteraction",
+            "NSPrivacyCollectedDataTypeCustomerSupport", "NSPrivacyCollectedDataTypePhotosorVideos",
+            "NSPrivacyCollectedDataTypePurchaseHistory",
+        ])
+        for type in collected {
+            #expect(type["NSPrivacyCollectedDataTypeLinked"] as? Bool == false, "\(type)")
+            #expect(type["NSPrivacyCollectedDataTypeTracking"] as? Bool == false, "\(type)")
+            let purposes = try #require(type["NSPrivacyCollectedDataTypePurposes"] as? [String])
+            #expect(!purposes.isEmpty && !purposes.contains("NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising"))
+        }
+    }
+
     /// The link in the app must lead to the published page: a web address, never the placeholder
     /// the source carries until the page is live.
     @Test

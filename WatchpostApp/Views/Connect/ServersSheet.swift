@@ -173,6 +173,9 @@ struct ServersSheet: View {
 
     @State private var formSheet: FormSheet?
     @State private var recordPendingRemoval: ServerRecord?
+    @State private var usage = UsageAnalytics.shared
+    @State private var showsFeedback = false
+    @State private var showsSupport = false
     @State private var showsRemoveConfirmation = false
 
     private var isConnecting: Bool {
@@ -192,6 +195,8 @@ struct ServersSheet: View {
                 savedSection
                 actionsSection
                 privacySection
+                supportSection
+                creditSection
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Servers")
@@ -213,6 +218,12 @@ struct ServersSheet: View {
             case .edit(let record):
                 ServerFormSheet(record: record) { formSheet = nil }
             }
+        }
+        .sheet(isPresented: $showsFeedback) {
+            FeedbackSheet()
+        }
+        .sheet(isPresented: $showsSupport) {
+            SupportDeveloperSheet()
         }
         .confirmationDialog("Remove this server?", isPresented: $showsRemoveConfirmation, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
@@ -243,6 +254,7 @@ struct ServersSheet: View {
             // and its failure is not shown the next time a form opens.
             model.cancelConnect()
         }
+        .usageScreen(.servers)
     }
 
     private var currentSection: some View {
@@ -404,10 +416,46 @@ struct ServersSheet: View {
     }
 
     /// The policy in the same place on every screen: one tap, opened by the system browser.
+    /// The usage statistics switch sits beside it, where someone looking for it will look.
     private var privacySection: some View {
         Section {
             Link("Privacy Policy", destination: SupportPages.privacyPolicy)
                 .accessibilityIdentifier("servers.privacy")
+            Toggle("Share anonymous usage statistics", isOn: Binding(
+                get: { usage.isSharing },
+                set: { usage.setSharing($0) }
+            ))
+            .accessibilityIdentifier("servers.statistics")
+        } footer: {
+            Text("Counts which screens are opened and how often the app runs. Never the server address, the password or the recordings.",
+                 comment: "Servers page: what the usage statistics switch covers")
+        }
+    }
+
+    /// A word to the developer: what went wrong, or a voluntary tip. Both open as sheets.
+    private var supportSection: some View {
+        Section {
+            Button {
+                showsFeedback = true
+            } label: {
+                Label(String(localized: "Send feedback", comment: "Row that opens the feedback form"),
+                      systemImage: "exclamationmark.bubble")
+            }
+            .accessibilityIdentifier("servers.feedback")
+
+            Button {
+                showsSupport = true
+            } label: {
+                Label(String(localized: "Support the developer", comment: "Row that opens the tips page"),
+                      systemImage: "heart")
+            }
+            .accessibilityIdentifier("servers.support")
+        }
+    }
+
+    private var creditSection: some View {
+        Section {
+            MadeWithAirBuild()
         }
     }
 }

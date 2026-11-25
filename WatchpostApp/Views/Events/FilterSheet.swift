@@ -41,6 +41,7 @@ struct FilterSheet: View {
             // The sign-in-again sheet is presented by the root; this one makes room for it.
             if expired { dismiss() }
         }
+        .usageScreen(.filter)
     }
 
     private func form(_ draft: Binding<EventFilter>) -> some View {

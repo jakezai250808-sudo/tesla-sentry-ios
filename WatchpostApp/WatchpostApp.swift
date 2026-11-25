@@ -23,10 +23,31 @@ private extension UIViewController {
 @main
 struct AirbuildApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @State private var tips = TipPurchases.shared
+
+    init() {
+        // Unit tests drive the app without reporting anything, like the usage statistics do.
+        guard !AppRuntime.isRunningTests else { return }
+        // Crash reports go first: they are the only thing that can explain a launch that goes wrong.
+        AirCrashReports.start(apiKey: FeedbackConfig.appKey,
+                              endpoint: "https://apps.air.build/v1/ingest/crashes",
+                              teamID: FeedbackConfig.teamID)
+        UsageAnalytics.shared.start()
+        TipPurchases.shared.start()
+    }
 
     var body: some Scene {
         WindowGroup {
             RootView()
+                // The thank-you for a tip the App Store confirmed while the tips page was closed.
+                .sheet(isPresented: Binding(
+                    get: { tips.showsTicket },
+                    set: { if !$0 { tips.hasShownTicket() } }
+                )) {
+                    if let ticket = tips.ticket {
+                        ThankYouSheet(ticket: ticket)
+                    }
+                }
         }
     }
 }

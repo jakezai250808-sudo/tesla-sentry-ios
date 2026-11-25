@@ -76,6 +76,7 @@ struct EventsScreen: View {
         }
         .serversSheet(isPresented: $showServers)
         .task { await model.refreshIfNeeded() }
+        .usageScreen(.events)
     }
 
     private var demoBadge: some View {

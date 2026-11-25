@@ -28,7 +28,8 @@ English: [README.md](README.md).
 命令行方式（模拟器已启动）：
 
 ```sh
-xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimulator build &&
+xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimulator \
+  CONFIGURATION_BUILD_DIR="$PWD/build/Debug-iphonesimulator" build &&
 xcrun simctl install booted build/Debug-iphonesimulator/WatchpostApp.app &&
 xcrun simctl launch booted com.jakezai.watchpost-pwvw
 ```
@@ -42,7 +43,9 @@ xcodebuild -project WatchpostApp.xcodeproj -scheme WatchpostApp -sdk iphonesimul
 
 ## 隐私
 
-- 不建账号，没有自己的云服务。App 只和你填写的地址通信，不含统计或广告 SDK。
+- 不建账号，没有自己的云服务。除了你填写的地址，App 只和开发者的上报服务（`apps.air.build`）通信：可以关掉的使用统计、崩溃报告、你主动发出的反馈、打赏购买记录。不含广告 SDK。
+- 使用统计只记打开了哪些页面、App 的使用次数，用的是每次安装新生成的随机编号，不包含服务器地址、密码和录像。默认开启，开关在「服务器」页；关掉时，没发完的记录和这个编号当场删除。
+- 崩溃报告带 App 版本、设备型号、系统版本和语言，崩溃文字里的地址已去掉。反馈带你输入的文字、选的图片，以及 App 版本、设备型号、系统版本和语言。打赏购买会连同 Apple 的收据一起上报。
 - 服务器地址和密码只留在本机：密码在 iOS 钥匙串里，其余在 App 自己的偏好设置里。
 - 允许明文 `http://`，因为家里的服务器在局域网里常常是这样访问的。访问局域网里的服务器时，iOS 会询问是否允许“本地网络”权限。
 

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C3A7F1D2E5B8A4C6D0E9F2A1 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = B8E4F7A2C9D3E5B1F6A8C0D2 /* PostHog */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A1B2C3D40000000000000001 /* App proxy */ = {
 			isa = PBXContainerItemProxy;
@@ -90,6 +94,7 @@
 			buildConfigurationList = 8C42E519CFA30563C7D495EB /* Build configuration list for PBXNativeTarget "WatchpostApp" */;
 			buildPhases = (
 				485B7BB5562F3ABD154D4B35 /* Sources */,
+				D4B8E2F3A6C9D5E7F0B1A2C3 /* Frameworks */,
 				64723A455F920BBCE48BF909 /* Resources */,
 			);
 			buildRules = (
@@ -101,6 +106,7 @@
 			);
 			name = WatchpostApp;
 			packageProductDependencies = (
+				B8E4F7A2C9D3E5B1F6A8C0D2 /* PostHog */,
 			);
 			productName = WatchpostApp;
 			productReference = E1D1C645818EB0816572F68E /* WatchpostApp.app */;
@@ -120,6 +126,11 @@
 					};
 					2E69B1330A3161295C9DCB01 = {
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.developer.devicecheck.appattest = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -133,6 +144,9 @@
 			);
 			mainGroup = 4B2A5E79F7D5BFD1F7DCE292;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A7F3D9C1B5E2F4A6C8D0E1F2 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A0906AD77C76E090572F0E63 /* Products */;
 			projectDirPath = "";
@@ -143,6 +157,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D4B8E2F3A6C9D5E7F0B1A2C3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3A7F1D2E5B8A4C6D0E9F2A1 /* PostHog in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
 		64723A455F920BBCE48BF909 /* Resources */ = {
@@ -233,7 +258,6 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -270,6 +294,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = WatchpostApp/WatchpostApp.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WatchpostApp/Info.plist;
 				CURRENT_PROJECT_VERSION = 3;
@@ -321,7 +346,6 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -351,6 +375,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = WatchpostApp/WatchpostApp.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WatchpostApp/Info.plist;
 				CURRENT_PROJECT_VERSION = 3;
@@ -399,6 +424,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A7F3D9C1B5E2F4A6C8D0E1F2 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.98.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B8E4F7A2C9D3E5B1F6A8C0D2 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A7F3D9C1B5E2F4A6C8D0E1F2 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8238217991C4C82D1BCE751B /* Project object */;
 }

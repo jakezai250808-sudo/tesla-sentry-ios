@@ -60,6 +60,7 @@ struct ExportSheet: View {
                 export.stopWaiting()
             }
         }
+        .usageScreen(.export)
     }
 
     private static func detent(for phase: ExportModel.Phase) -> PresentationDetent {

@@ -8,6 +8,8 @@ struct ConnectScreen: View {
     @State private var recordPendingRemoval: ServerRecord?
     @State private var showsRemoveConfirmation = false
     @State private var savedAttemptID: UUID?
+    @State private var showsFeedback = false
+    @State private var showsSupport = false
 
     private var isConnecting: Bool {
         model.connectState == .connecting
@@ -78,7 +80,7 @@ struct ConnectScreen: View {
                         .padding(.top, Metrics.groupSpacing)
                 }
 
-                privacyPolicyLink
+                supportLinks
                     .padding(.top, Metrics.groupSpacing)
             }
             .padding(.horizontal, Metrics.side)
@@ -93,6 +95,12 @@ struct ConnectScreen: View {
         .sheet(item: $editingRecord, onDismiss: { model.cancelConnect() }) { record in
             ServerFormSheet(record: record) { editingRecord = nil }
         }
+        .sheet(isPresented: $showsFeedback) {
+            FeedbackSheet()
+        }
+        .sheet(isPresented: $showsSupport) {
+            SupportDeveloperSheet()
+        }
         .confirmationDialog("Remove this server?", isPresented: $showsRemoveConfirmation, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
                 if let record = recordPendingRemoval {
@@ -106,16 +114,74 @@ struct ConnectScreen: View {
         }
         .onChange(of: model.addressText) { _, _ in savedAttemptID = nil }
         .onChange(of: model.passwordText) { _, _ in savedAttemptID = nil }
+        .usageScreen(.connect)
     }
 
-    /// A line of the system's own link look: where the privacy policy lives, one tap away.
-    /// Centred under the demo button, with a full-size tap target around the small text.
-    private var privacyPolicyLink: some View {
-        Link("Privacy Policy", destination: SupportPages.privacyPolicy)
-            .font(.footnote)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .contentShape(Rectangle())
-            .accessibilityIdentifier("connect.privacy")
+    /// Where the privacy policy, feedback and the tips are, one tap away: centred under the
+    /// demo button, in the system's own link look, with a full-size tap target around each.
+    /// They share a line when they fit and take one each when they do not; stacked, they have no dots.
+    private var supportLinks: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 0) {
+                privacyLink
+
+                linkSeparator
+
+                feedbackLink
+
+                linkSeparator
+
+                supportLink
+            }
+            VStack(spacing: 0) {
+                privacyLink
+                feedbackLink
+                supportLink
+            }
+        }
+        .font(.footnote)
+    }
+
+    private var privacyLink: some View {
+        Link(destination: SupportPages.privacyPolicy) {
+            Text(privacyPolicyTitle)
+        }
+        .frame(minHeight: 44)
+        .padding(.horizontal, 10)
+        .contentShape(Rectangle())
+        .accessibilityIdentifier("connect.privacy")
+    }
+
+    private var feedbackLink: some View {
+        footerAction(String(localized: "Send feedback", comment: "Link that opens the feedback form"),
+                     identifier: "connect.feedback") { showsFeedback = true }
+    }
+
+    private var supportLink: some View {
+        footerAction(String(localized: "Support the developer", comment: "Link that opens the tips page"),
+                     identifier: "connect.support") { showsSupport = true }
+    }
+
+    private var privacyPolicyTitle: String {
+        String(localized: "Privacy Policy", comment: "Link to the app's privacy policy")
+    }
+
+    /// The dot between two links, hidden from VoiceOver.
+    private var linkSeparator: some View {
+        Text(verbatim: "\u{2022}")
+            .accessibilityHidden(true)
+    }
+
+    private func footerAction(_ title: String, identifier: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .foregroundStyle(Color.action)
+        }
+        .buttonStyle(.plain)
+        .frame(minHeight: 44)
+        .padding(.horizontal, 10)
+        .contentShape(Rectangle())
+        .accessibilityIdentifier(identifier)
     }
 
     private var appMark: some View {
