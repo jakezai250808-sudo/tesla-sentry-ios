@@ -278,6 +278,8 @@ button:active{background:#0ea472}
         #expect(session.token?.value == Self.newToken)
     }
 
+    /// A password from the page that did not sign in replaces nothing: the sign-in a refused cookie
+    /// needs afterwards is made with the saved one, and the page's refusal was not its.
     @Test func aPasswordThatIsNotTheSavedOneDoesNotStopTheSavedOne() async throws {
         let transport = StubTransport([.status(401, "no"), .unauthorized(), .loginOK(token: Self.newToken), .ok("{}")])
         let session = Fixtures.session(transport, password: "secret")
@@ -285,6 +287,48 @@ button:active{background:#0ea472}
         let response = try await session.data(for: session.request("/api/events"))
         #expect(response.status == 200)
         #expect(transport.sent.map(\.path) == ["/login", "/api/events", "/login", "/api/events"])
+        #expect(transport.sent(to: "/login").map(\.bodyText) == [Self.loginForm("typo"), Self.loginForm("secret")])
+    }
+
+    // MARK: The password the person signed in with
+
+    /// The body of a `POST /login` made with `password`.
+    private static func loginForm(_ password: String) -> String { "u=admin&p=\(ServerPath.queryValue(password))&next=%2F" }
+
+    /// The password the person signed in with on the page is what the session signs in with by itself
+    /// for the rest of the run, not the one saved before: the cookie that sign-in got is refused
+    /// later, and the sign-in the request needs is made with it, once. The server takes no other, as
+    /// that is why the page came up.
+    @Test func thePasswordSignedInWithOnThePageIsTheOneTheSessionSignsInWithAfterwards() async throws {
+        let fresh = "1761600000.freshfreshfreshfreshfreshfreshfresh"
+        let again = "1761600000.againagainagainagainagainagainagain"
+        let signIns = Box(0)
+        let transport = RoutingTransport(otherwise: .status(500, "unexpected"))
+        transport.route("/login", .decided { sent in
+            guard sent.bodyText == Self.loginForm("fresh-secret") else { return .status(401) }
+            // A cookie of its own each time.
+            return .loginOK(token: signIns.update { $0 += 1; return $0 } == 1 ? fresh : again)
+        })
+        transport.route("/api/events", steps: [.now(.unauthorized()), .now(.ok("{}"))])
+        let session = Fixtures.session(transport, password: "secret")
+
+        #expect(try await session.login(password: "fresh-secret").value == fresh)
+        #expect(try await session.data(for: session.request("/api/events")).status == 200)
+        #expect(transport.sent(to: "/login").map(\.bodyText) == [Self.loginForm("fresh-secret"), Self.loginForm("fresh-secret")])
+        #expect(transport.sent(to: "/api/events").map { $0.header("Cookie") } == ["tsf_sess=\(fresh)", "tsf_sess=\(again)"])
+        #expect(session.token?.value == again)
+    }
+
+    /// An empty password from the page is not one to keep: the session goes on signing in with the
+    /// one it had.
+    @Test func anEmptyPasswordFromThePageIsNotKept() async throws {
+        let transport = RoutingTransport(otherwise: .status(500, "unexpected"))
+        transport.route("/login", endless: .loginOK(token: Self.newToken))
+        transport.route("/api/events", steps: [.now(.unauthorized()), .now(.ok("{}"))])
+        let session = Fixtures.session(transport, password: "secret")
+        _ = try await session.login(password: "")
+        #expect(try await session.data(for: session.request("/api/events")).status == 200)
+        #expect(transport.sent(to: "/login").map(\.bodyText) == [Self.loginForm(""), Self.loginForm("secret")])
     }
 
     // MARK: Sending with the rule
@@ -479,7 +523,9 @@ button:active{background:#0ea472}
     /// A person signs in from the sheet while the app is signing in by itself with the saved
     /// password, and that one is refused afterwards: the cookie the person just got stays, and is
     /// what the next request goes out with. The request that waited for the app's own sign-in
-    /// fails with it, as any refused sign-in does.
+    /// fails with it, as any refused sign-in does. The saved password's late refusal counts against
+    /// nothing: the password the person signed in with is what a refused cookie is answered with
+    /// afterwards.
     @Test func aLateFailureOfTheSavedPasswordKeepsTheCookieAPersonJustGot() async throws {
         let fresh = "1761600000.freshfreshfreshfreshfreshfreshfresh"
         let transport = RoutingTransport(otherwise: .status(500, "unexpected"))
@@ -502,5 +548,14 @@ button:active{background:#0ea472}
         #expect(session.token?.value == fresh, "The cookie the person got is kept")
         #expect(try await session.data(for: session.request("/api/events")).status == 200)
         #expect(transport.sent(to: "/login").count == 2)
+        // The cookie the person got is refused later. The server takes the password they signed in
+        // with, and no other.
+        let again = "1761600000.againagainagainagainagainagainagain"
+        transport.route("/api/events", steps: [.now(.unauthorized()), .now(.ok(#"{"SentryClips": []}"#))])
+        transport.route("/login", .decided { $0.bodyText == Self.loginForm("fresh-secret") ? .loginOK(token: again) : .status(401) })
+        #expect(try await session.data(for: session.request("/api/events")).status == 200)
+        #expect(transport.sent(to: "/login").map(\.bodyText)
+                == [Self.loginForm("secret"), Self.loginForm("fresh-secret"), Self.loginForm("fresh-secret")])
+        #expect(session.token?.value == again)
     }
 }

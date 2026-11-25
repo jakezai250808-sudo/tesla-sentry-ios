@@ -423,6 +423,12 @@ final class AppModel {
     /// on its own network (often the local-network permission), which has the sheet offer the way to
     /// Settings. Anything else is `.unreachable`, as it is with no current server, when nothing was
     /// asked at all.
+    ///
+    /// A password that signed in, when it is not empty, is saved for this server and is, for the rest
+    /// of this run, the one its session signs in with by itself: a cookie the server refuses later is
+    /// answered with one sign-in, not with this page again, for as long as the server takes it. A
+    /// password that did not sign in, and closing the page, leave both as they were. No other server
+    /// is touched.
     func reconnect(password: String) async -> ConnectFailure? {
         guard case .server(let id) = mode, let session = serverSessions[id] else { return .unreachable }
         do {

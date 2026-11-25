@@ -632,6 +632,147 @@ struct AppModelTests {
         #expect(transport.sent(to: "/api/events").last?.header("Cookie") == "tsf_sess=1761700000.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     }
 
+    /// The password signed in with on the page is what the app signs in with for the rest of the run.
+    /// The server stopped taking the saved one (that is why the page came up) and takes the new one
+    /// only; the cookie the page got is refused later: one sign-in, with the new password, the list
+    /// loads, and the page does not come back. A typo on the page first is not saved in its place.
+    @Test func thePasswordSignedInAgainWithIsWhatTheAppSignsInWithForTheRestOfTheRun() async {
+        defer { registry.cleanUp() }
+        let transport = gatedServer()
+        let (model, store) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        model.passwordText = "s3cret"
+        await connect(model)
+        // The cookie is refused, and the saved password after it: the page asks for the password.
+        transport.route("/api/events", endless: .unauthorized())
+        transport.route("/api/live", endless: .unauthorized())
+        transport.route("/login", endless: .status(401))
+        await model.refresh()
+        #expect(model.sessionExpired)
+        let logins = transport.sent(to: "/login").count
+        // From here on the server takes the new password only, a cookie of its own each time, and
+        // answers the cookies it gives for it: the one from the page until it is lost, the renewed one always.
+        let signedIn = "1761700000.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        let renewed = "1761800000.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        let signIns = Box(0)
+        transport.route("/login", .decided { sent in
+            guard sent.bodyText == "u=admin&p=better&next=%2F" else { return .status(401) }
+            return .loginOK(token: signIns.update { $0 += 1; return $0 } == 1 ? signedIn : renewed)
+        })
+        let lost = Box(false)
+        for (path, body) in [("/api/events", Fixtures.eventsJSON), ("/api/live", ServerFixtures.live)] {
+            transport.route(path, .decided { sent in
+                let cookie = sent.header("Cookie") ?? ""
+                let taken = cookie == "tsf_sess=\(renewed)" || (cookie == "tsf_sess=\(signedIn)" && !lost.get())
+                return taken ? .ok(body) : .unauthorized()
+            })
+        }
+        // A typo first: said so, and the saved password is not replaced by it.
+        #expect(await model.reconnect(password: "typo") == .credentialsRejected)
+        #expect(model.sessionExpired, "The page is still what is needed")
+        #expect(store.records.first.flatMap { store.password(for: $0.id) } == "s3cret")
+        #expect(transport.sent(to: "/login").count == logins + 1)
+        // The new password: kept, and the list loads.
+        #expect(await model.reconnect(password: "better") == nil)
+        #expect(!model.sessionExpired)
+        #expect(model.loadState.isLoaded)
+        #expect(store.records.first.flatMap { store.password(for: $0.id) } == "better")
+        #expect(transport.sent(to: "/login").count == logins + 2)
+        // The cookie the page got is refused later: one sign-in, with the new password, and no page.
+        lost.set(true)
+        await model.refresh()
+        #expect(model.loadState.isLoaded)
+        #expect(model.lastFailure == nil)
+        #expect(!model.sessionExpired)
+        #expect(transport.sent(to: "/login").count == logins + 3)
+        #expect(transport.sent(to: "/login").last?.bodyText == "u=admin&p=better&next=%2F")
+        #expect(transport.sent(to: "/api/events").last?.header("Cookie") == "tsf_sess=\(renewed)")
+        #expect(model.events == Fixtures.events)
+    }
+
+    /// A password from the page that did not sign in changes nothing, and neither does closing the
+    /// page: nothing is saved that was not saved before, and the app does not try that password by
+    /// itself. The server here had no password when it was connected, and asks for one from now on.
+    @Test func aPasswordFromThePageThatDidNotSignInAndClosingThePageChangeNothing() async {
+        defer { registry.cleanUp() }
+        let transport = openServer()
+        let (model, store) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        await connect(model)
+        #expect(transport.sent(to: "/login").isEmpty)
+        let token = store.records.first.flatMap { store.token(for: $0.id) }
+        // The server asks for a password from now on, and refuses the cookie it gave before.
+        transport.route("/api/events", endless: .unauthorized())
+        transport.route("/api/live", endless: .unauthorized())
+        transport.route("/login", endless: .status(401))
+        await model.refresh()
+        #expect(model.sessionExpired)
+        #expect(await model.reconnect(password: "typo") == .credentialsRejected)
+        #expect(model.sessionExpired, "The page is still what is needed")
+        #expect(model.listNeedsSignIn)
+        #expect(store.records.first.flatMap { store.password(for: $0.id) } == nil, "Not saved")
+        #expect(store.records.first.flatMap { store.token(for: $0.id) } == token)
+        // Closing the page: as it was. A pull is refused as before, and no password is tried behind it.
+        model.dismissSessionNotice()
+        let asks = transport.sent(to: "/api/events").count
+        await model.refresh(askedByPerson: true)
+        #expect(model.sessionExpired)
+        #expect(model.lastFailure == .unauthorized)
+        #expect(store.records.first.flatMap { store.password(for: $0.id) } == nil)
+        #expect(transport.sent(to: "/api/events").count == asks + 1)
+        #expect(transport.sent(to: "/login").count == 1, "The person's own try is the only one")
+    }
+
+    /// Signing in again on one server touches no other: the password and the cookie saved for another
+    /// are as they were, and that one is connected to with them, with no sign-in.
+    @Test func signingInAgainOnOneServerTouchesNoOther() async {
+        defer { registry.cleanUp() }
+        let transport = gatedServer()
+        let (model, store) = makeModel(transport)
+        // Another server, saved as an earlier connect to it leaves it.
+        let other = record("192.168.1.51:8080")
+        store.save(other)
+        store.setPassword("other-secret", for: other.id)
+        store.setToken(Fixtures.token, for: other.id)
+        // The one in use: its cookie is refused, and its saved password after it.
+        model.addressText = "192.168.1.50:8080"
+        model.passwordText = "s3cret"
+        await connect(model)
+        transport.route("/api/events", endless: .unauthorized())
+        transport.route("/api/live", endless: .unauthorized())
+        transport.route("/login", endless: .status(401))
+        await model.refresh()
+        #expect(model.sessionExpired)
+        let signedIn = "1761700000.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        transport.route("/login", endless: .loginOK(token: signedIn))
+        let cookies = ["tsf_sess=\(signedIn)", Fixtures.cookie]
+        func answered(with body: String) -> RoutingTransport.Answer {
+            .decided { cookies.contains($0.header("Cookie") ?? "") ? .ok(body) : .unauthorized() }
+        }
+        transport.route("/api/events", answered(with: Fixtures.eventsJSON))
+        transport.route("/api/live", answered(with: ServerFixtures.live))
+        func signInsOnTheOther() -> Int { transport.sent(to: "/login").filter { $0.url.host == "192.168.1.51" }.count }
+
+        #expect(await model.reconnect(password: "better") == nil)
+        #expect(model.loadState.isLoaded)
+        #expect(store.records.count == 2)
+        // The other was saved first, so it is `records.first`: the one in use is found by not being it.
+        let inUse = store.records.first { $0.id != other.id }
+        #expect(inUse.flatMap { store.password(for: $0.id) } == "better")
+        #expect(store.password(for: other.id) == "other-secret")
+        #expect(store.token(for: other.id) == Fixtures.token)
+        #expect(signInsOnTheOther() == 0)
+        // It is connected to with what is stored for it: no sign-in. The list is loaded already, for
+        // the server before, so it is the switch that is waited for, not the list.
+        model.connect(to: other)
+        #expect(model.connectState == .connecting)
+        #expect(await settle { model.mode == .server(other.id) && model.connectState == .idle })
+        #expect(await settle { model.loadState.isLoaded })
+        #expect(transport.sent(to: "/api/auth/info").last?.header("Cookie") == Fixtures.cookie)
+        #expect(transport.sent(to: "/api/events").last?.header("Cookie") == Fixtures.cookie)
+        #expect(signInsOnTheOther() == 0)
+    }
+
     /// The events screen says why the list is missing by reading `lastFailure`, not
     /// `sessionExpired`, through `listNeedsSignIn`: closing the page clears the second, and the
     /// first has to stay.

@@ -20,12 +20,13 @@ enum LoginAnswer {
 final class ServerSession: Sendable {
     let id: UUID
     let base: URL
-    /// The admin password, when the person chose to save it.
-    let password: String?
     let transport: any HTTPTransport
 
     private struct State: Sendable {
         var token: SessionToken?
+        /// The password the app signs in with by itself, when there is one: the one saved for the
+        /// server, or the one the person last signed in with on the sign-in-again page.
+        var password: String?
         /// Counts every token change, so a request that left with an old cookie can tell.
         var revision = 0
         /// The saved password was refused. It is not tried again on this session: eight wrong
@@ -45,21 +46,27 @@ final class ServerSession: Sendable {
          now: @escaping @Sendable () -> Date = Date.init) {
         self.id = id
         self.base = base
-        self.password = password
         self.transport = transport
         self.now = now
-        state = OSAllocatedUnfairLock(initialState: State(token: token))
+        state = OSAllocatedUnfairLock(initialState: State(token: token, password: password))
     }
 
     var token: SessionToken? { state.withLock { $0.token } }
+    /// The admin password, when there is one: the one the person chose to save, or the one they
+    /// signed in with on the sign-in-again page last, when that signed in (`login(password:)`).
+    var password: String? { state.withLock { $0.password } }
     var hasPassword: Bool { !(password ?? "").isEmpty }
     var cookieHeader: String? { token.map { "tsf_sess=\($0.value)" } }
     /// For AVURLAsset and image loads.
     var mediaHeaders: [String: String] { cookieHeader.map { ["Cookie": $0] } ?? [:] }
 
-    func updateToken(_ token: SessionToken?) {
+    /// Stores the cookie a sign-in won, and forgets what was held against the one before (a refused
+    /// password, a lock). With `password`, the one that won it is what this session signs in with
+    /// from then on.
+    func updateToken(_ token: SessionToken?, password: String? = nil) {
         state.withLock { current in
             current.token = token
+            if let password { current.password = password }
             current.revision += 1
             current.passwordRejected = false
             current.lockout = nil
@@ -148,11 +155,15 @@ final class ServerSession: Sendable {
         }
     }
 
-    /// `POST /login` with user "admin". 302 + Set-Cookie → token (stored, returned). 401 →
-    /// `.unauthorized`, 429 → `.lockedOut`. It is the person's own try (connect, the sign-in-again
-    /// page), so it is sent lock or no lock.
+    /// `POST /login` with user "admin", for a password the person typed (the sign-in-again page), so
+    /// it is sent lock or no lock. 302 + Set-Cookie → token (stored, returned), and a password that
+    /// is not empty is from then on the one this session signs in with, in place of the one it had.
+    /// Kept, a cookie the server refuses later, once it stopped taking that one, would be answered
+    /// with a try of it: a step nearer the server's lock, then this page again. 401 → `.unauthorized`,
+    /// 429 → `.lockedOut`: the password and the cookie are as they were (a 429 is remembered as the
+    /// server's lock, as on any sign-in).
     func login(password: String) async throws -> SessionToken {
-        try await logIn(with: password)
+        try await logIn(with: password, keepingThePassword: !password.isEmpty)
     }
 
     /// `POST /login` as it came back, with transport errors unmapped; for `connect`, which reports
@@ -253,14 +264,18 @@ final class ServerSession: Sendable {
 
     /// The one password check at a time. A burst of requests that all find the cookie expired must
     /// cost the server one attempt, not a burst of them, and they all want the same answer.
-    fileprivate func logIn(with password: String) async throws -> SessionToken {
+    ///
+    /// `keepingThePassword`: the password is one the person typed (`login(password:)`), and when it
+    /// signs in it becomes the session's. By itself the session signs in with the one it has, and
+    /// that one is kept whatever comes back.
+    fileprivate func logIn(with password: String, keepingThePassword: Bool = false) async throws -> SessionToken {
         do {
             switch try await postLogin(password: password) {
             case .token(let token):
-                updateToken(token)
+                updateToken(token, password: keepingThePassword ? password : nil)
                 return token
             case .rejected:
-                if password == self.password { state.withLock { $0.passwordRejected = true } }
+                state.withLock { if password == $0.password { $0.passwordRejected = true } }
                 throw UpstreamError.unauthorized
             case .lockedOut:
                 throw UpstreamError.lockedOut
