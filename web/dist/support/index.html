@@ -30,7 +30,9 @@
 </section>
 <section class="document-section">
 <h2>1. 连接需要什么？</h2>
-<p>需要装有 iOS 18 或更高版本的 iPhone、兼容的 tesla-sentry-f50 服务器地址，以及管理员密码。地址有端口时请一并填写。不填写协议时会使用 HTTP；要使用服务器的 HTTPS，请明确填写 https://。岗哨不提供服务器，也不要求另建岗哨账号。连接页的“体验演示”使用内置虚构样例，不连接服务器。</p>
+<p>需要装有 iOS 18 或更高版本的 iPhone、兼容的 tesla-sentry-f50 服务器地址，以及管理员密码。地址有端口时请一并填写。不填写协议时会使用 HTTP；要使用服务器的 HTTPS，请明确填写 https://。岗哨不提供服务器，也不要求另建岗哨账号。</p>
+<p>1.0（构建2和3）的演示仅含模拟画面；真实录像示例将随后续版本提供。</p>
+<p><strong>含真实录像示例的后续版本：</strong>连接页的“体验演示”可查看随 App 提供的模拟画面和一段 20 秒的真实行驶录像示例，无需连接录像服务器。</p>
 </section>
 <section class="document-section">
 <h2>2. 为什么连接失败？</h2>
@@ -42,7 +44,8 @@
 </section>
 <section class="document-section">
 <h2>4. 导出做了什么？</h2>
-<p>App 请求服务器生成单分钟、单镜头的带水印视频，下载到手机后交给系统分享面板。服务器缺少水印生成条件时可能拒绝导出，请在浏览器中检查服务器。“停止等待”只结束 App 这次等待或下载；已经交给服务器的任务仍可能继续。是否保存或发送，由你在分享面板中选择。</p>
+<p><strong>连接服务器时：</strong>App 请求服务器生成单分钟、单镜头的带水印视频，下载到手机后交给系统分享面板。服务器缺少水印生成条件时可能拒绝导出，请在浏览器中检查服务器。“停止等待”只结束 App 这次等待或下载；已经交给服务器的任务仍可能继续。是否保存或发送，由你在分享面板中选择。</p>
+<p>后续版本的真实录像示例导出会复制随 App 提供的原片，保留片内署名，不额外添加水印。保存或分享仍由你选择。</p>
 </section>
 <section class="document-section">
 <h2>5. 怎样移除已保存的服务器？</h2>
@@ -74,7 +77,9 @@
 </section>
 <section class="document-section">
 <h2>1. What do I need to connect?</h2>
-<p>Use an iPhone running iOS 18 or later, your compatible tesla-sentry-f50 server address, and its admin password. Include the port if your server uses one. Omitting the scheme uses HTTP; enter https:// explicitly to use your server's HTTPS. Watchpost does not provide a server or require a separate Watchpost account. On the connect screen, Try demo opens fictional sample recordings without connecting to a server.</p>
+<p>Use an iPhone running iOS 18 or later, your compatible tesla-sentry-f50 server address, and its admin password. Include the port if your server uses one. Omitting the scheme uses HTTP; enter https:// explicitly to use your server's HTTPS. Watchpost does not provide a server or require a separate Watchpost account.</p>
+<p>The demo in 1.0 (builds 2 and 3) contains simulated visuals only. The real recording sample will be included in a later update.</p>
+<p><strong>Next update with the real recording sample: </strong>On the connect screen, Try demo opens simulated visuals and a 20-second sample of real driving footage bundled with the app. No recording server connection is needed.</p>
 </section>
 <section class="document-section">
 <h2>2. Why can't I connect?</h2>
@@ -86,7 +91,8 @@
 </section>
 <section class="document-section">
 <h2>4. What does export do?</h2>
-<p>Export asks your server to generate one watermarked minute from one camera. It downloads the result to the phone for the system share sheet. A server without the required watermark support may refuse the export; check the server in a browser. Stop waiting ends the app's wait or download; a job already sent to the server may continue there. Saving or sending from the share sheet is your choice.</p>
+<p><strong>When connected to your server: </strong>Export asks your server to generate one watermarked minute from one camera. It downloads the result to the phone for the system share sheet. A server without the required watermark support may refuse the export; check the server in a browser. Stop waiting ends the app's wait or download; a job already sent to the server may continue there. Saving or sending from the share sheet is your choice.</p>
+<p>In the later update, exporting the real recording sample copies the bundled clip unchanged, keeps its on-screen credit and adds no extra watermark. You choose whether to save or share it.</p>
 </section>
 <section class="document-section">
 <h2>5. How do I remove a saved server?</h2>
