@@ -3,8 +3,9 @@
 
 Usage (from the project root):
   Tools/Strings/merge.py            merge + write the catalog, then audit
-  Tools/Strings/merge.py --check    audit only (nothing written); exit 1 when a key is missing
-                                    or a catalog on disk is not what the tables give
+  Tools/Strings/merge.py --check    audit only (nothing written); exit 1 when a key is missing,
+                                    no key is found in code, or a catalog on disk is not what the
+                                    tables give
   Tools/Strings/merge.py --list     print every key the Swift sources use, with its zh-Hans
 
 The catalog is generated, never edited by hand: change a JSON file and merge again.
@@ -167,7 +168,10 @@ def blank(code, pattern, group):
 
 def swift_files():
     for path in sorted(glob.glob(os.path.join(APP_DIR, "**", "*.swift"), recursive=True)):
-        if os.sep + ".airbuild" + os.sep in path:
+        # A `.airbuild` folder inside the app is not source. The project itself may be checked out
+        # under one, as an AirBuild worktree is, so only the part of the path under the app counts.
+        inside_app = os.path.relpath(path, APP_DIR)
+        if inside_app.startswith(".airbuild" + os.sep) or os.sep + ".airbuild" + os.sep in inside_app:
             continue
         yield path
 
@@ -319,6 +323,10 @@ def main(argv):
     uses, notes, cjk = scan_all(app_tables)
     missing = {k: v for k, v in uses.items() if k not in app_tables}
     unused = sorted(k for k in app_tables if k not in uses)
+    if not uses and app_tables:
+        # Nothing found cannot mean nothing to check: the sources were skipped, not read.
+        errors.append("no key found in code; {} Swift files were looked at under {}"
+                      .format(sum(1 for _ in swift_files()), os.path.relpath(APP_DIR, ROOT)))
     if os.path.exists(INFO_PLIST):
         with open(INFO_PLIST, encoding="utf-8") as fh:
             plist_keys = set(re.findall(r"<key>([^<]+)</key>", fh.read()))
