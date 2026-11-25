@@ -36,7 +36,7 @@ struct DisplayTests {
         #expect(summary.contains(length))
         if language == "en" {
             #expect(length == "20 seconds")
-            #expect(summary == "Six cameras · 20 seconds")
+            #expect(summary == "Six camera views · 20 seconds")
         }
     }
 }

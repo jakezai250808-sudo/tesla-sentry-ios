@@ -86,7 +86,7 @@ struct ExportSheet: View {
                     .font(.subheadline)
                     .foregroundStyle(Color.labelPrimary)
 
-                Text("The real recording as it is in the app, credit included. Nothing is added.",
+                Text("Exports this sample video with its existing credits. No extra watermark is added.",
                      comment: "Explains the fixed scope of an export of the demo's real recording")
                     .font(.footnote)
                     .foregroundStyle(Color.labelSecondary)

@@ -163,9 +163,9 @@ enum Display {
         String(format: String(localized: "%lld seconds", bundle: bundle, comment: "Length of the demo's real recording sample"), seconds)
     }
 
-    /// The same with what the sample is: "Six cameras · 20 seconds".
+    /// The same with what the sample is: "Six camera views · 20 seconds".
     static func sampleSummary(_ seconds: Int, bundle: Bundle = .main) -> String {
-        String(format: String(localized: "Six cameras · %lld seconds", bundle: bundle,
+        String(format: String(localized: "Six camera views · %lld seconds", bundle: bundle,
                               comment: "The demo's real recording sample: its cameras and its length"),
                seconds)
     }

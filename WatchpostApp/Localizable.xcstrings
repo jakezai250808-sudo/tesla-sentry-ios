@@ -84,7 +84,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld秒"
+            "value" : "%lld 秒"
           }
         }
       }
@@ -606,17 +606,6 @@
         }
       }
     },
-    "Edited by Watchpost: shortened, and the six cameras composed into one picture." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Watchpost 作了剪辑：缩短时长，并将六路摄像头画面合成为一幅。"
-          }
-        }
-      }
-    },
     "Enter an address that starts with http:// or https://." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -705,6 +694,17 @@
         }
       }
     },
+    "Exports this sample video with its existing credits. No extra watermark is added." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原样导出这段示例视频，保留画面中的署名，不额外添加水印。"
+          }
+        }
+      }
+    },
     "Extra Support" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -727,13 +727,13 @@
         }
       }
     },
-    "Footage: Tesla FSD Drive (5 min, 6 cameras) by cfahlgren1" : {
+    "Footage: Tesla FSD Drive (5 min, 6 cameras), published by cfahlgren1" : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "素材：cfahlgren1 的 Tesla FSD Drive（5 分钟，6 路摄像头）"
+            "value" : "录像来源：cfahlgren1 发布的 Tesla FSD Drive (5 min, 6 cameras)"
           }
         }
       }
@@ -1267,13 +1267,13 @@
         }
       }
     },
-    "Real clip" : {
+    "Real recording" : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "真实画面"
+            "value" : "真实录像"
           }
         }
       }
@@ -1289,13 +1289,13 @@
         }
       }
     },
-    "Real recording sample with six cameras in one picture" : {
+    "Real recording sample, six camera views in a grid" : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "真实录像示例，六路摄像头画面合为一幅"
+            "value" : "真实录像示例，六路画面分格显示"
           }
         }
       }
@@ -1674,24 +1674,13 @@
         }
       }
     },
-    "Six cameras in one picture, composed beforehand. They can't be switched separately." : {
+    "Six camera views · %lld seconds" : {
       "extractionState" : "manual",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "六路摄像头画面已预先合成在一幅画面里，无法单独切换。"
-          }
-        }
-      }
-    },
-    "Six cameras · %lld seconds" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "六路摄像头·%lld秒"
+            "value" : "六路画面 · %lld 秒"
           }
         }
       }
@@ -1861,28 +1850,6 @@
         }
       }
     },
-    "The real recording as it is in the app, credit included. Nothing is added." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出的是 App 内的真实录像本身，画面内已含署名，不再添加任何内容。"
-          }
-        }
-      }
-    },
-    "The real recording sample can't be played in this build." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "真实录像示例在此版本中无法播放。"
-          }
-        }
-      }
-    },
     "The server answered %lld." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1960,6 +1927,17 @@
         }
       }
     },
+    "This sample recording can't be played." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这段示例录像无法播放。"
+          }
+        }
+      }
+    },
     "This server is not compatible yet." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1967,6 +1945,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这个服务器暂不兼容。"
+          }
+        }
+      }
+    },
+    "This video combines six camera views in a grid. You can't switch between cameras." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这段视频将六路画面分格显示，无法切换单个镜头。"
           }
         }
       }
@@ -2176,6 +2165,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "岗哨"
+          }
+        }
+      }
+    },
+    "Watchpost shortened the footage, combined six camera views in a grid, and added camera labels and credits." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "岗哨截取了录像片段，将六路画面分格排列，并添加镜头名称和署名。"
           }
         }
       }

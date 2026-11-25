@@ -147,7 +147,7 @@ struct PlaybackScreen: View {
     /// What VoiceOver calls the picture.
     private func videoLabel(_ playback: PlaybackModel) -> Text {
         if event.isRealSample {
-            return Text("Real recording sample with six cameras in one picture",
+            return Text("Real recording sample, six camera views in a grid",
                         comment: "VoiceOver name of the demo's real recording video")
         }
         return Text(playback.camera.title)
@@ -328,7 +328,7 @@ struct PlaybackScreen: View {
     /// Why nothing is shown, when the clip is gone.
     private var missingWords: Text {
         event.isRealSample
-            ? Text("The real recording sample can't be played in this build.",
+            ? Text("This sample recording can't be played.",
                   comment: "The demo's real recording is not in the app or cannot be read")
             : Text("This clip is no longer available", comment: "The recording was removed since the list loaded")
     }
@@ -346,7 +346,7 @@ struct PlaybackScreen: View {
 
             if event.isRealSample {
                 // All six cameras are already in the one picture: there is no other camera to switch to.
-                Text("Six cameras in one picture, composed beforehand. They can't be switched separately.",
+                Text("This video combines six camera views in a grid. You can't switch between cameras.",
                      comment: "Why the demo's real recording has no camera switcher")
                     .font(.footnote)
                     .foregroundStyle(Color.labelSecondary)
@@ -700,7 +700,7 @@ struct PlaybackScreen: View {
                 .foregroundStyle(Color.labelPrimary)
                 .accessibilityIdentifier("playback.sample")
 
-            CreditLink(words: Text("Footage: Tesla FSD Drive (5 min, 6 cameras) by cfahlgren1",
+            CreditLink(words: Text("Footage: Tesla FSD Drive (5 min, 6 cameras), published by cfahlgren1",
                                    comment: "Credit for the demo's real recording: the data set's name and its publisher"),
                        page: DemoClipSource.RealSample.source)
                 .accessibilityIdentifier("playback.sample.source")
@@ -710,7 +710,7 @@ struct PlaybackScreen: View {
                        page: DemoClipSource.RealSample.license)
                 .accessibilityIdentifier("playback.sample.license")
 
-            Text("Edited by Watchpost: shortened, and the six cameras composed into one picture.",
+            Text("Watchpost shortened the footage, combined six camera views in a grid, and added camera labels and credits.",
                  comment: "What was changed from the original recording")
                 .font(.footnote)
                 .foregroundStyle(Color.labelSecondary)

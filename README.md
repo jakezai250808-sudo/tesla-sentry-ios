@@ -22,7 +22,7 @@ driving telemetry, and exports watermarked clips to share.
   quality you pick. The finished file goes out through the system share sheet.
 - **Demo mode** with sample footage drawn entirely from code, plus one real recording: twenty
   seconds of a drive from a public data set, its six cameras already composed into one picture. It
-  is marked “Real clip” and credited on screen, and cannot be switched between cameras. A “Demo
+  is marked “Real recording” and credited on screen, and cannot be switched between cameras. A “Demo
   data” badge stays on screen so sample events are never mistaken for real ones.
 
 ## Camera names

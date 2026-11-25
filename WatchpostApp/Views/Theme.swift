@@ -158,7 +158,7 @@ struct DemoBadge: View {
             pictureTag(Text("Demo clip", comment: "Tag in the corner of a demo picture or video"))
         case .realClip:
             // Short on the same grounds as "Demo clip": it sits in a thumbnail, and over a picture of its own.
-            pictureTag(Text("Real clip", comment: "Tag in the corner of the demo's one real recording, on its thumbnail and over its video"))
+            pictureTag(Text("Real recording", comment: "Tag in the corner of the demo's one real recording, on its thumbnail and over its video"))
         }
     }
 
