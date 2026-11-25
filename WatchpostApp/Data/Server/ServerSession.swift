@@ -190,7 +190,7 @@ final class ServerSession: Sendable {
         let message: String?
         if let line = try? Self.errorLine.firstMatch(in: text)?.output.1 {
             message = plainText(line)
-        } else if !text.contains("<") {
+        } else if isASentence(text) {
             message = plainText(Substring(text))
         } else {
             message = nil
@@ -198,9 +198,18 @@ final class ServerSession: Sendable {
         return LockoutNotice(message: message, minutes: message.flatMap(namedMinutes(in:)))
     }
 
+    /// A short plain text and nothing else: not a page, which has markup, and not a JSON answer,
+    /// which would otherwise be shown as what the server said, braces and all.
+    private static func isASentence(_ text: String) -> Bool {
+        text.count <= 200 && !text.contains("<") && !text.contains("{")
+    }
+
     /// The error line of the server's login page: `<div class="err">…</div>`. Made where it is
     /// used: a pattern is not kept in a static, which Swift 6 would not have as shared state.
-    private static var errorLine: Regex<(Substring, Substring)> { #/<div class="err">([^<]*)<"/# }
+    /// The server's own page, as it answers a locked sign-in, is at the top of the parser table in
+    /// the tests: a pattern that does not match it reads as "the server said nothing", on every
+    /// screen, and no other row has the page's own shape.
+    private static var errorLine: Regex<(Substring, Substring)> { #/<div class="err">([^<]*)</# }
 
     /// A sentence with its markup and entities gone; nil when nothing is left. The patterns are
     /// written with the long delimiters (`#/…/#`): a bare `/…/` after `(` reads as operators here.
@@ -279,13 +288,12 @@ final class ServerSession: Sendable {
             // `/login` is not sent. The person's own ask lifts the lock first (`liftLockout()`).
             if state.withLock({ activeLockout($0) }) != nil { throw UpstreamError.lockedOut }
 
-            if state.withLock({ $0.revision }) == revision {
+            if isAtRevision(revision) {
                 if state.withLock({ $0.passwordRejected }) { throw UpstreamError.unauthorized }
                 do {
                     _ = try await logins.login(self, staleRevision: revision)
                 } catch {
-                    // The cookie was refused and could not be replaced: keeping it would only repeat this.
-                    state.withLock { $0.token = nil; $0.revision += 1 }
+                    signInFailed(staleRevision: revision)
                     throw error
                 }
             }
@@ -313,22 +321,42 @@ final class ServerSession: Sendable {
         }
         return request
     }
+
+    /// Whether the cookie is still as it was when `revision` was read: no sign-in, no refusal and
+    /// no sign-out changed it since.
+    fileprivate func isAtRevision(_ revision: Int) -> Bool {
+        state.withLock { $0.revision == revision }
+    }
+
+    /// The cookie was refused and the sign-in that was to replace it did not work: keeping it would
+    /// only repeat this. Once per cookie: whoever sees the failure first drops it, and the others
+    /// find it dropped, or find a newer cookie that a person signed in for in the meantime, which stays.
+    fileprivate func signInFailed(staleRevision revision: Int) {
+        state.withLock { current in
+            guard current.revision == revision else { return }
+            current.token = nil
+            current.revision += 1
+        }
+    }
 }
 
 /// One login at a time, shared by every request that ran into the same stale cookie.
 private actor LoginGate {
-    private var inFlight: (revision: Int, task: Task<SessionToken, Error>)?
+    /// The sign-in for the cookie state it was asked for, kept after it finished: a request that
+    /// took long to get here is answered by it, and the password is not tried twice for one state.
+    private var signIn: (revision: Int, task: Task<SessionToken, Error>)?
 
-    func login(_ session: ServerSession, staleRevision revision: Int) async throws -> SessionToken {
-        if let inFlight, inFlight.revision == revision {
-            return try await inFlight.task.value
+    /// The token of the one sign-in for the cookie state `revision`, which every request that found
+    /// the same stale cookie waits for. Nil when that state was left behind with no sign-in to
+    /// wait for: there is nothing for the caller but to go on with the cookie as it is now.
+    func login(_ session: ServerSession, staleRevision revision: Int) async throws -> SessionToken? {
+        if let current = signIn, current.revision == revision {
+            return try await current.task.value
         }
+        guard session.isAtRevision(revision) else { return nil }
         // Not a child task on purpose: a caller that is cancelled must not cancel the login the others are waiting for.
         let task = Task { try await session.logIn(with: session.password ?? "") }
-        inFlight = (revision, task)
-        defer {
-            if inFlight?.revision == revision { inFlight = nil }
-        }
+        signIn = (revision, task)
         return try await task.value
     }
 }

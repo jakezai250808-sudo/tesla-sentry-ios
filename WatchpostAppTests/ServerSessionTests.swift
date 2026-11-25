@@ -148,13 +148,98 @@ struct ServerSessionTests {
     }
 
     /// What the server wrote when it stopped taking tries, read off the page it answers `/login` with
-    /// and off a plain sentence alike, with the wait when it is written in minutes.
+    /// and off a plain sentence alike, with the wait when it is written in minutes. The first two rows
+    /// are the sample server's own locked pages, as it answered them (`Tools/LiveServer`, the upstream
+    /// program): the rule `.err` of the style sheet comes before the line, and markup around it.
+    private static let lockedPageZH = #"""
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>登录 · 哨兵一剪梅</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+ background:#0d1219;color:#e8eef4;font:15px/1.5 -apple-system,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+ padding:24px}
+.card{width:100%;max-width:340px;background:#161d26;border:1px solid #232c36;border-radius:18px;
+ padding:26px 22px 22px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.dot{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);
+ display:flex;align-items:center;justify-content:center;font-size:17px}
+img.dot{object-fit:cover;padding:0;background:none;border-radius:50%}
+h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
+p.sub{margin:2px 0 0;font-size:12px;color:#7d8894}
+label{display:block;font-size:12px;color:#97a3af;margin:12px 0 6px}
+input{width:100%;padding:11px 12px;border-radius:11px;border:1px solid #2b3540;background:#0f151d;
+ color:#e8eef4;font-size:15px;outline:none}
+input:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:11px;cursor:pointer;
+ background:#10b981;color:#fff;font-size:15px;font-weight:600}
+button:active{background:#0ea472}
+.err{margin-top:12px;font-size:13px;color:#f87171;min-height:18px}
+.foot{margin-top:16px;font-size:11px;color:#5f6b78;text-align:center}
+</style></head><body>
+<form class="card" method="post" action="/login">
+  <div class="logo"><img class="dot" src="/api/brand/logo" alt="">
+    <div><h1>哨兵一剪梅</h1><p class="sub">Tesla Sentry Drive</p></div></div>
+  <label>用户名</label>
+  <input name="u" autocomplete="username" autocapitalize="none" autocorrect="off" value="admin">
+  <label>密码</label>
+  <input name="p" type="password" autocomplete="current-password" autofocus>
+  <input type="hidden" name="next" value="/">
+  <button type="submit">登录</button>
+  <div class="err">尝试次数过多，请 5 分钟后再试</div>
+  <div class="foot">仅限本人访问 · 登录状态保留 30 天</div>
+</form></body></html>
+"""#
+
+    private static let lockedPageEN = #"""
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Log in · 哨兵一剪梅</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+ background:#0d1219;color:#e8eef4;font:15px/1.5 -apple-system,"SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+ padding:24px}
+.card{width:100%;max-width:340px;background:#161d26;border:1px solid #232c36;border-radius:18px;
+ padding:26px 22px 22px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.dot{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);
+ display:flex;align-items:center;justify-content:center;font-size:17px}
+img.dot{object-fit:cover;padding:0;background:none;border-radius:50%}
+h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
+p.sub{margin:2px 0 0;font-size:12px;color:#7d8894}
+label{display:block;font-size:12px;color:#97a3af;margin:12px 0 6px}
+input{width:100%;padding:11px 12px;border-radius:11px;border:1px solid #2b3540;background:#0f151d;
+ color:#e8eef4;font-size:15px;outline:none}
+input:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:11px;cursor:pointer;
+ background:#10b981;color:#fff;font-size:15px;font-weight:600}
+button:active{background:#0ea472}
+.err{margin-top:12px;font-size:13px;color:#f87171;min-height:18px}
+.foot{margin-top:16px;font-size:11px;color:#5f6b78;text-align:center}
+</style></head><body>
+<form class="card" method="post" action="/login">
+  <div class="logo"><img class="dot" src="/api/brand/logo" alt="">
+    <div><h1>哨兵一剪梅</h1><p class="sub">Tesla Sentry Drive</p></div></div>
+  <label>Username</label>
+  <input name="u" autocomplete="username" autocapitalize="none" autocorrect="off" value="admin">
+  <label>Password</label>
+  <input name="p" type="password" autocomplete="current-password" autofocus>
+  <input type="hidden" name="next" value="/">
+  <button type="submit">Log in</button>
+  <div class="err">Too many attempts, try again in 5 minutes</div>
+  <div class="foot">Owner access only · Login remembered for 30 days</div>
+</form></body></html>
+"""#
+
     @Test(arguments: [
-        (#"<html><body><div class="err">尝试次数过多，请 5 分钟后再试</div></body></html>"#, "尝试次数过多，请 5 分钟后再试", 5),
+        (Self.lockedPageZH, "尝试次数过多，请 5 分钟后再试", 5),
+        (Self.lockedPageEN, "Too many attempts, try again in 5 minutes", 5),
         ("尝试次数过多，请 5 分钟后再试", "尝试次数过多，请 5 分钟后再试", 5),
         (#"<div class="err">Too many attempts. Try again in 10 minutes.</div>"#, "Too many attempts. Try again in 10 minutes.", 10),
         (#"<div class="err">Locked for 5分钟, then retry.</div>"#, "Locked for 5分钟, then retry.", 5),
-        (#"<div class="err">Please try again after 2 min.</div>"#, "Please try again in 2 min.", 2),
+        (#"<div class="err">Please try again after 2 min.</div>"#, "Please try again after 2 min.", 2),
         (#"<div class="err">Locked &quot;for now&quot; &#8212; 1440 minutes</div>"#, "Locked \"for now\" — 1440 minutes", 1440),
         (#"<div class="err">Please  try again in 30 seconds.</div>"#, "Please try again in 30 seconds.", nil),
         (#"<div class="err">Try again in 2000 minutes.</div>"#, "Try again in 2000 minutes.", nil),
@@ -162,6 +247,10 @@ struct ServerSessionTests {
         (#"<html><body><h1>Login</h1></body></html>"#, nil, nil),
         (#"<div class="err">   </div>"#, nil, nil),
         ("", nil, nil),
+        // Not a page and not a sentence: a JSON answer is not shown as what the server said.
+        (#"{"error": "Too many attempts. Try again in 10 minutes."}"#, nil, nil),
+        // Nor is a plain text that is not a short one.
+        (String(repeating: "Locked for 5 minutes. ", count: 20), nil, nil),
     ] as [(String, String?, Int?)])
     func theSentenceAndTheWaitAreReadOffWhatTheServerAnswered(_ body: String, _ message: String?, _ minutes: Int?) {
         #expect(ServerSession.lockoutNotice(in: Data(body.utf8)) == LockoutNotice(message: message, minutes: minutes))
@@ -385,5 +474,33 @@ struct ServerSessionTests {
         #expect(transport.sent(to: "/login").count == 1)
         #expect(transport.sent(to: "/api/events").count == 6)
         #expect(session.token?.value == Self.newToken)
+    }
+
+    /// A person signs in from the sheet while the app is signing in by itself with the saved
+    /// password, and that one is refused afterwards: the cookie the person just got stays, and is
+    /// what the next request goes out with. The request that waited for the app's own sign-in
+    /// fails with it, as any refused sign-in does.
+    @Test func aLateFailureOfTheSavedPasswordKeepsTheCookieAPersonJustGot() async throws {
+        let fresh = "1761600000.freshfreshfreshfreshfreshfreshfresh"
+        let transport = RoutingTransport(otherwise: .status(500, "unexpected"))
+        transport.route("/api/events", .decided { sent in
+            sent.header("Cookie") == "tsf_sess=\(fresh)" ? .ok(#"{"SentryClips": []}"#) : .unauthorized()
+        })
+        let session = Fixtures.session(transport, password: "secret")
+
+        // The app's own sign-in is on its way, and is not answered yet.
+        transport.route("/login", .held(.status(401)))
+        let waiting = Task { try await session.data(for: session.request("/api/events")) }
+        #expect(await waitUntil { transport.sent(to: "/login").count == 1 })
+        // The person's, a moment later, is taken.
+        transport.route("/login", endless: .loginOK(token: fresh))
+        #expect(try await session.login(password: "fresh-secret").value == fresh)
+        // The app's own is refused after all.
+        transport.route("/login", endless: .status(401))
+        transport.releaseWaiting()
+        await #expect(throws: UpstreamError.unauthorized) { try await waiting.value }
+        #expect(session.token?.value == fresh, "The cookie the person got is kept")
+        #expect(try await session.data(for: session.request("/api/events")).status == 200)
+        #expect(transport.sent(to: "/login").count == 2)
     }
 }

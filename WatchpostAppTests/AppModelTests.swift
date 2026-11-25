@@ -417,15 +417,20 @@ struct AppModelTests {
         #expect(model.events == events)
         #expect(transport.sent(to: "/login").count == logins + 2)
         #expect(transport.sent(to: "/api/events").count == asks + 2)
-        // The server takes the password again: the list loads and nothing says locked.
+        // The server takes the password again, and its pages answer the cookie that brings: one
+        // sign-in more, the list loads, and nothing says locked.
+        let newCookie = "tsf_sess=\(Self.newToken)"
+        func asksWithTheNewCookie() -> Int { transport.sent(to: "/api/events").filter { $0.header("Cookie") == newCookie }.count }
+        let withNewCookie = asksWithTheNewCookie()
         transport.route("/login", endless: .loginOK(token: Self.newToken))
-        transport.route("/api/events", endless: .ok(Fixtures.eventsJSON))
-        transport.route("/api/live", endless: .ok(ServerFixtures.live))
+        transport.route("/api/events", .decided { $0.header("Cookie") == newCookie ? .ok(Fixtures.eventsJSON) : .unauthorized() })
+        transport.route("/api/live", .decided { $0.header("Cookie") == newCookie ? .ok(ServerFixtures.live) : .unauthorized() })
         await model.refresh(askedByPerson: true)
         #expect(model.loadState.isLoaded)
         #expect(model.lastFailure == nil)
         #expect(model.listLockout == nil)
         #expect(transport.sent(to: "/login").count == logins + 3)
+        #expect(asksWithTheNewCookie() == withNewCookie + 1, "Asked once more, with the cookie that was just given")
     }
 
     /// Coming up on a server that refuses the saved cookie and then stops taking the saved password:
