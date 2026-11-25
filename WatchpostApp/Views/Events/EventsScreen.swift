@@ -34,7 +34,10 @@ struct EventsScreen: View {
                 .frame(maxWidth: Metrics.side * 2 + 600)
                 .frame(maxWidth: .infinity)
             }
-            .refreshable { await model.refresh(askedByPerson: true) }
+            // The refresh is a task of its own, as the Retry button's is. SwiftUI cancels the task it
+            // hands a pull the moment the list redraws under it, and an empty list does so as soon as
+            // the refresh starts ("Connecting…"); the sign-in the person asked for must outlive that.
+            .refreshable { await Task { await model.refresh(askedByPerson: true) }.value }
             .safeAreaInset(edge: .bottom) {
                 if model.isDemo {
                     demoNote

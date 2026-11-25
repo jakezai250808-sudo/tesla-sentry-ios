@@ -460,6 +460,101 @@ struct AppModelTests {
         #expect(transport.sent(to: "/login").count == 1)
     }
 
+    /// A gated server the app is connected to, whose cookie is then refused and whose saved password
+    /// it stops taking: what was loaded stays on screen and says sign-in is locked, and nothing asks
+    /// the server again until the person does. With the sign-ins and list asks made by then.
+    private func aLockedList() async -> (transport: RoutingTransport, model: AppModel, logins: Int, asks: Int) {
+        let transport = gatedServer()
+        let (model, _) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        model.passwordText = "s3cret"
+        await connect(model)
+        let loaded = model.events
+        transport.route("/api/events", endless: .unauthorized())
+        transport.route("/api/live", endless: .unauthorized())
+        transport.route("/login", endless: .status(429, ServerFixtures.lockedOutMessage))
+        await model.refresh()
+        #expect(model.lastFailure == .lockedOut)
+        #expect(model.events == loaded)
+        #expect(model.listLockout == LockoutNotice(message: ServerFixtures.lockedOutMessage, minutes: 5))
+        return (transport, model, transport.sent(to: "/login").count, transport.sent(to: "/api/events").count)
+    }
+
+    /// A pull is the person asking for the sign-in the list needs, and it goes on although SwiftUI
+    /// cancels the task it started it with (it does so the moment the list redraws under it, as an
+    /// empty list does when the refresh starts): the refresh is a task of its own, as the Retry
+    /// button's is, and its answer is what the list shows.
+    @Test func aPullIsNotLostWhenTheTaskThatStartedItIsCancelled() async {
+        defer { registry.cleanUp() }
+        let (transport, model, logins, _) = await aLockedList()
+        // The server takes the password again, and its pages answer the cookie that brings.
+        let newCookie = "tsf_sess=\(Self.newToken)"
+        transport.route("/login", endless: .loginOK(token: Self.newToken))
+        transport.route("/api/events", .decided { $0.header("Cookie") == newCookie ? .ok(Fixtures.eventsJSON) : .unauthorized() })
+        transport.route("/api/live", .decided { $0.header("Cookie") == newCookie ? .ok(ServerFixtures.live) : .unauthorized() })
+        // What the pull does on the screen, and what SwiftUI then does to the task it handed it.
+        let pull = Task { await Task { await model.refresh(askedByPerson: true) }.value }
+        pull.cancel()
+        await pull.value
+        #expect(model.loadState.isLoaded, "The refresh went on, and its answer is what the list shows")
+        #expect(model.lastFailure == nil)
+        #expect(model.listLockout == nil)
+        #expect(transport.sent(to: "/login").count == logins + 1)
+    }
+
+    /// The person leaves the server while the pull's requests are on their way: their answer
+    /// changes nothing on the connect screen, and the server stays saved.
+    @Test func aPullAnsweredAfterThePersonLeftTheServerChangesNothing() async throws {
+        defer { registry.cleanUp() }
+        let (transport, model, logins, asks) = await aLockedList()
+        let lives = transport.sent(to: "/api/live").count
+        let newToken = Self.newToken
+        transport.route("/login", endless: .loginOK(token: newToken))
+        // Asked without the new cookie first, then again with it; the second answer waits.
+        transport.route("/api/events", steps: [.now(.unauthorized()), .held(.ok(Fixtures.eventsJSON))])
+        transport.route("/api/live", steps: [.now(.unauthorized()), .held(.ok(ServerFixtures.live))])
+        let pull = Task { await model.refresh(askedByPerson: true) }
+        #expect(await waitUntil { transport.sent(to: "/api/events").count == asks + 2 && transport.sent(to: "/api/live").count == lives + 2 })
+        model.returnToConnect()
+        transport.releaseWaiting()
+        await pull.value
+        #expect(model.mode == .connect)
+        #expect(model.loadState == .idle)
+        #expect(model.events.isEmpty)
+        #expect(model.listLockout == nil)
+        #expect(model.store.records.count == 1, "Leaving does not forget the server")
+        #expect(transport.sent(to: "/login").count == logins + 1)
+    }
+
+    /// Two asks from the person (a pull and Retry, one after the other) while one sign-in is on its
+    /// way: that is one sign-in, and the list is what the newer ask was answered with.
+    @Test func twoAsksWhileOneSignInIsOnItsWayAreOneSignIn() async {
+        defer { registry.cleanUp() }
+        let (transport, model, logins, asks) = await aLockedList()
+        let lives = transport.sent(to: "/api/live").count
+        transport.route("/login", steps: [.held(.loginOK(token: Self.newToken))])
+        // Each ask: refused without the new cookie, then answered with it.
+        transport.route("/api/events", steps: [.now(.unauthorized()), .now(.unauthorized()),
+                                                .now(.ok(Fixtures.eventsJSON)), .now(.ok(Fixtures.eventsJSON))])
+        transport.route("/api/live", steps: [.now(.unauthorized()), .now(.unauthorized()),
+                                              .now(.ok(ServerFixtures.live)), .now(.ok(ServerFixtures.live))])
+        let withTheNewCookie = transport.sent(to: "/api/events").filter { $0.header("Cookie") == "tsf_sess=\(Self.newToken)" }.count
+        let first = Task { await model.refresh(askedByPerson: true) }
+        #expect(await waitUntil { transport.sent(to: "/login").count == logins + 1 })
+        let second = Task { await model.refresh(askedByPerson: true) }
+        #expect(await waitUntil { transport.sent(to: "/api/events").count == asks + 2 && transport.sent(to: "/api/live").count == lives + 2 })
+        transport.releaseWaiting()
+        await first.value
+        await second.value
+        #expect(transport.sent(to: "/login").count == logins + 1)
+        #expect(model.loadState.isLoaded)
+        #expect(model.lastFailure == nil)
+        #expect(model.listLockout == nil)
+        #expect(model.events == Fixtures.events)
+        // Each ask asked once more, with the cookie both were waiting for.
+        #expect(transport.sent(to: "/api/events").filter { $0.header("Cookie") == "tsf_sess=\(Self.newToken)" }.count == withTheNewCookie + 2)
+    }
+
     @Test func aStatusThatDoesNotAnswerIsOnlyTheStatus() async {
         defer { registry.cleanUp() }
         let transport = openServer()
