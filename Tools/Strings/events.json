@@ -14,6 +14,7 @@
   "Reason, ": "触发原因，",
   "Loading…": "正在载入…",
   "Couldn't load events.": "事件载入失败。",
+  "Sign in to this server again to view events.": "请重新登录这台服务器后查看事件。",
   "Retry": "重试",
   "Allow Local Network for Watchpost in Settings, then retry.": "请先在设置里允许岗哨访问本地网络，再重试。",
   "Open Settings": "打开设置",

@@ -397,6 +397,17 @@
         }
       }
     },
+    "Couldn't connect. Check the password and try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接失败，请检查密码后重试。"
+          }
+        }
+      }
+    },
     "Couldn't load events." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1571,6 +1582,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重新登录"
+          }
+        }
+      }
+    },
+    "Sign in to this server again to view events." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请重新登录这台服务器后查看事件。"
           }
         }
       }

@@ -246,6 +246,9 @@ struct ConnectActionButton: View {
 struct ConnectFailureView: View {
     let failure: ConnectFailure
     var onEditAddress: (() -> Void)? = nil
+    /// The form above asks for the password only (the sign-in-again sheet). There is no address
+    /// on screen to check, so the general connection line names the password alone.
+    var passwordOnly = false
 
     @Environment(\.openURL) private var openURL
 
@@ -256,7 +259,7 @@ struct ConnectFailureView: View {
                 EmptyView()
 
             case .unreachable, .server, .credentialsRejected:
-                failureMessage("Couldn't connect. Check the address and password.")
+                connectionFailureMessage
 
             case .lockedOut:
                 failureMessage("Too many tries. Try again later.")
@@ -286,6 +289,17 @@ struct ConnectFailureView: View {
             }
         }
         .accessibilityIdentifier("connect.failure")
+    }
+
+    /// The server does not say which of the two it did not accept, and neither does this line.
+    /// Where only the password was asked for, the address is not something to check.
+    @ViewBuilder
+    private var connectionFailureMessage: some View {
+        if passwordOnly {
+            failureMessage("Couldn't connect. Check the password and try again.")
+        } else {
+            failureMessage("Couldn't connect. Check the address and password.")
+        }
     }
 
     private func failureMessage(_ key: LocalizedStringKey) -> some View {

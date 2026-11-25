@@ -39,7 +39,9 @@ struct ReconnectSheet: View {
                         .padding(.top, 20)
 
                     if let failure {
-                        ConnectFailureView(failure: failure)
+                        // This page asks for the password only, so its failure line does not send
+                        // the person to check an address that is not on screen.
+                        ConnectFailureView(failure: failure, passwordOnly: true)
                             .padding(.top, 12)
                     }
 

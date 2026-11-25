@@ -450,6 +450,33 @@ struct AppModelTests {
         #expect(transport.sent(to: "/api/events").last?.header("Cookie") == "tsf_sess=1761700000.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     }
 
+    /// The events screen says why the list is missing by reading `lastFailure`, not
+    /// `sessionExpired`: closing the page clears the second, and the first has to stay.
+    @Test func cancellingTheSignInAgainPageKeepsTheRefusalAsTheReasonThereIsNoList() async {
+        defer { registry.cleanUp() }
+        let transport = gatedServer()
+        // The cookie is refused on the list, and the saved password on the login that follows.
+        transport.route("/api/events", endless: .unauthorized())
+        transport.route("/login", steps: [.now(.loginOK(token: Self.newToken)), .now(.status(401)), .now(.status(401))])
+        let (model, _) = makeModel(transport)
+        model.addressText = "192.168.1.50:8080"
+        model.passwordText = "s3cret"
+        model.connect()
+        #expect(await settle { model.sessionExpired })
+        #expect(model.loadState == .failed)
+        #expect(model.events.isEmpty)
+        #expect(model.lastFailure == .unauthorized)
+        model.dismissSessionNotice()
+        #expect(!model.sessionExpired)
+        #expect(model.loadState == .failed)
+        #expect(model.events.isEmpty)
+        #expect(model.lastFailure == .unauthorized)
+        // Retry on that line asks again, the server refuses again, and the page comes back.
+        await model.refresh()
+        #expect(model.sessionExpired)
+        #expect(model.lastFailure == .unauthorized)
+    }
+
     @Test(arguments: [
         (StubTransport.Reply.status(401), ConnectFailure.credentialsRejected),
         (.status(429, "try later"), .lockedOut),

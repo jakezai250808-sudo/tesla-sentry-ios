@@ -65,8 +65,10 @@ final class AppModel {
     // Events screen
     private(set) var events: [RecordedEvent] = []
     private(set) var loadState: LoadState = .idle
-    /// Why the last refresh did not work, for the one case the person can fix
-    /// outside the app (local network permission); nil once a refresh works.
+    /// Why the last refresh did not work: for the one case the person can fix
+    /// outside the app (local network permission), and for the events screen to
+    /// tell an empty list that is missing because the server refused the session
+    /// from any other; nil once a refresh works.
     private(set) var lastFailure: UpstreamError?
     /// When the list on screen was last fetched; the list may be older than the phone's clock.
     private(set) var lastRefresh: Date?

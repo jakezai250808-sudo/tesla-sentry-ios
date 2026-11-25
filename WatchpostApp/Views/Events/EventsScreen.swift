@@ -313,7 +313,7 @@ struct EventsScreen: View {
                 .font(.system(size: 32))
                 .foregroundStyle(Color.labelSecondary)
                 .accessibilityHidden(true)
-            Text("Couldn't load events.")
+            loadFailureMessage
                 .font(.subheadline)
                 .foregroundStyle(Color.labelPrimary)
                 .multilineTextAlignment(.center)
@@ -342,6 +342,21 @@ struct EventsScreen: View {
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier("events.empty")
+    }
+
+    /// Why there is no list. When the server stopped accepting the session, that is said, since
+    /// the person can fix it here. It is read off the failure and not off `sessionExpired`: that
+    /// is cleared when the sign-in-again sheet is cancelled, and the refusal is still the reason.
+    private var loadFailureMessage: Text {
+        if needsSignIn {
+            Text("Sign in to this server again to view events.")
+        } else {
+            Text("Couldn't load events.")
+        }
+    }
+
+    private var needsSignIn: Bool {
+        model.loadState == .failed && model.lastFailure == .unauthorized
     }
 
     private var needsLocalNetworkPermission: Bool {
